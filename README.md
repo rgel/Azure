@@ -1,6 +1,6 @@
 # Azure Repo
 ## Microsoft Azure POSH scripts
 
-### </b><ins>[Deploy-AzureVm.ps1</ins></b>]
+### </b>[Deploy-AzureVm.ps1</b>]
 
 This script deploys multiple Azure VM from JSON templates.
