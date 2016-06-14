@@ -17,8 +17,8 @@ This script creates file that contains encrypted password for Azure VM local adm
 
 ### </b><ins>[Iec_Msdn_Windows.json</ins></b>] (https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows.json)
 
-JSON example for standalone Azure Windows VMs in MSDN subscription.
+JSON template example for standalone Azure Windows VMs in MSDN subscription.
 
 ### </b><ins>[Iec_Msdn_Windows_AS.json</ins></b>] (https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows_AS.json)
 
-JSON example for Availability Set members Azure Windows VMs in MSDN subscription.
+JSON template example for Availability Set members Azure Windows VMs in MSDN subscription.
