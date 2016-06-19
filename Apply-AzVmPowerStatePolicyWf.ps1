@@ -8,7 +8,7 @@
 	Dependencies ::	Azure PowerShell modules.
 	Version 1.0  ::	19-Jun-2016 :: Release.
 .LINK
-	http://ps1code.com
+	http://www.ps1code.com/#!Azure-Automation-How-to-stopstart-Azure-VM-on-schedule/c1tye/576660770cf2426d7619470c
 #>
 
 Workflow Apply-AzVmPowerStatePolicyWf {
