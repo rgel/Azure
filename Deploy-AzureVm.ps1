@@ -34,7 +34,7 @@
 .NOTES
 	Author       ::	Roman Gelman.
 	Dependencies ::	Azure PS Modules.
-	Version 1.0  ::	14-Jun-2016  :: Release.
+	Version 1.0  ::	20-Jun-2016  :: Release.
 .LINK
 	https://goo.gl/vAxH2a
 #>
@@ -297,7 +297,7 @@ Begin {
 	$Stage++
 	$setResGr = @((Get-AzureRmResourceGroup).ResourceGroupName |sort)
 	
-	If     ($setResGr.Length -eq 0) {Throw "Subscription '$Subscription' doesn't have any ResourceGroup"}
+	If     ($setResGr.Length -eq 0) {Throw "Subscription '$Subscription' doesn't have any ResourceGroups"}
 	ElseIf ($setResGr.Length -eq 1) {$ResourceGroup = $setResGr[0]; Write-Host "[Stage $Stage..$Stages] The sole ResourceGroup '$ResourceGroup' was choicen by default" -ForegroundColor Yellow}
 	Else   {$ResourceGroup = Write-Menu -Menu $setResGr -Shift 1 -Prompt "Choice ResourceGroup" -Header "[Stage $Stage..$Stages] Available ResourceGroups:"}
 	
@@ -414,21 +414,17 @@ Begin {
 			}
 		}
 	}
-	<#
-	### Generate VM Name :: single VM ###
-	For ($i=1; $i -le $VMIndex.Length-1; $i++) {
-		If ($VMIndex[$i] - $VMIndex[$i-1] -ne 1) {$FreeIndex = [int]$VMIndex[$i-1] + 1}
-	}
-	If (!$FreeIndex) {$FreeIndex = [int]$VMIndex[-1] + 1}
-	$VM = "$rgxVMPrefix$FreeIndex"
-	#>
+	
+	### Single VM with custom name ###
+	If ($PSBoundParameters.ContainsKey('VMName') -and $VMCount -eq 1) {$VM += $VMName}
 	
 	### Generate VM Name :: Multiple VM ###
-	For ($i=1; $i -le $VMIndex.Length-1; $i++) {If (([int]$VMIndex[$i]-[int]$VMIndex[$i-1]) -gt 1) {For ($k=1; $k -lt ([int]$VMIndex[$i]-[int]$VMIndex[$i-1]); $k++) {$FreeIndex += [string]([int]$VMIndex[$i-1] + $k)}}}
-	$FreeIndexCount = $FreeIndex.Length
-	If ($FreeIndexCount -lt $VMCount) {For ($j=1; $j -le ($VMCount-$FreeIndexCount); $j++) {$FreeIndex += [string]([int]$VMIndex[-1] + $j)}} Else {$FreeIndex = $FreeIndex[0..($VMCount-1)]}
-	Foreach ($index in $FreeIndex) {$VM += "$rgxVMPrefix$index"}
-
+	Else {
+		For ($i=1; $i -le $VMIndex.Length-1; $i++) {If (([int]$VMIndex[$i]-[int]$VMIndex[$i-1]) -gt 1) {For ($k=1; $k -lt ([int]$VMIndex[$i]-[int]$VMIndex[$i-1]); $k++) {$FreeIndex += [string]([int]$VMIndex[$i-1] + $k)}}}
+		$FreeIndexCount = $FreeIndex.Length
+		If ($FreeIndexCount -lt $VMCount) {For ($j=1; $j -le ($VMCount-$FreeIndexCount); $j++) {$FreeIndex += [string]([int]$VMIndex[-1] + $j)}} Else {$FreeIndex = $FreeIndex[0..($VMCount-1)]}
+		Foreach ($index in $FreeIndex) {$VM += "$rgxVMPrefix$index"}
+	}
 }
 
 Process {
@@ -495,7 +491,7 @@ Process {
 				Write-Host "Failed to deploy VM '$($VM[$d])'" -ForegroundColor Red
 			}
 		}
-	} #EndFor
-} #EndProcess
+	} #End For
+} #End Process
 
 End {}
