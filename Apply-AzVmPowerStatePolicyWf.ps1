@@ -7,6 +7,7 @@
 	Author       ::	Roman Gelman.
 	Dependencies ::	Azure PowerShell modules.
 	Version 1.0  ::	19-Jun-2016 :: Release.
+	Version 1.1  ::	20-Jun-2016 :: Error handling added.
 .LINK
 	http://www.ps1code.com/#!Azure-Automation-How-to-stopstart-Azure-VM-on-schedule/c1tye/576660770cf2426d7619470c
 #>
@@ -31,7 +32,7 @@ Param (
 	[switch]$WhatIf
 )
 
-$ErrorActionPreference = 'SilentlyContinue'
+$ErrorActionPreference = 'Stop'
 $azCredential = Get-AutomationPSCredential -Name $AzureCredentialAsset
 $null = Login-AzureRmAccount -Credential $azCredential
 $null = Set-AzureRmContext -SubscriptionName $AzureSubscription
@@ -39,77 +40,94 @@ $AzVms = Get-AzureRmVm -ResourceGroupName $AzureResourceGroup |select Name,Tags,
 
 Foreach -Parallel($AzVm in $AzVms) {
 
-	### Running VM ###
-	If ($AzVm.PowerState -eq 'running') {
-		$azTime = [datetime]::Now
-		$TimeShort = $azTime.ToString('HH:mm')
-		$TimeVm = [System.TimeZoneInfo]::ConvertTimeFromUtc($TimeShort, [System.TimeZoneInfo]::FindSystemTimeZoneById($AzureVmTimeZone))
-		
-		### 00:00---On+++Off---00:00 ###
-		If ([datetime]$AzVm.Tags.PowerOn -lt [datetime]$AzVm.Tags.PowerOff) {
-			If ($TimeVm -gt [datetime]$AzVm.Tags.PowerOff -or $TimeVm -lt [datetime]$AzVm.Tags.PowerOn) {
-				If ($WhatIf) {$Status = 'Simulation'}
-				Else {
-					$Result = Stop-AzureRmVm -Name $AzVm.Name -ResourceGroupName $AzureResourceGroup -Force
-					$Status = ($Result.StatusCode)
-				}
-				$Execution = 'Stopped'
-			} Else {$Execution = 'NotRequired'}
-		
-		### 00:00+++Off---On+++00:00 ###
+Try 
+	{
+		### Running VM ###
+		If ($AzVm.PowerState -eq 'running') {
+			$azTime = [datetime]::Now
+			$TimeShort = $azTime.ToString('HH:mm')
+			$TimeVm = [System.TimeZoneInfo]::ConvertTimeFromUtc($TimeShort, [System.TimeZoneInfo]::FindSystemTimeZoneById($AzureVmTimeZone))
+			
+			### 00:00---On+++Off---00:00 ###
+			If ([datetime]$AzVm.Tags.PowerOn -lt [datetime]$AzVm.Tags.PowerOff) {
+				If ($TimeVm -gt [datetime]$AzVm.Tags.PowerOff -or $TimeVm -lt [datetime]$AzVm.Tags.PowerOn) {
+					If ($WhatIf) {$Status = 'Simulation'}
+					Else {
+						$Result = Stop-AzureRmVm -Name $AzVm.Name -ResourceGroupName $AzureResourceGroup -Force
+						$Status = ($Result.StatusCode)
+					}
+					$Execution = 'Stopped'
+				} Else {$Execution = 'NotRequired'}
+			
+			### 00:00+++Off---On+++00:00 ###
+			} Else {
+				If ($TimeVm -gt [datetime]$AzVm.Tags.PowerOff -and $TimeVm -lt [datetime]$AzVm.Tags.PowerOn) {
+					If ($WhatIf) {$Status = 'Simulation'}
+					Else {
+						$Result = Stop-AzureRmVm -Name $AzVm.Name -ResourceGroupName $AzureResourceGroup -Force
+						$Status = ($Result.StatusCode)
+					}
+					$Execution = 'Stopped'
+				} Else {$Execution = 'NotRequired'}
+			}
+			
+		### Not running VM (stopped/deallocated/suspended etc) ###
 		} Else {
-			If ($TimeVm -gt [datetime]$AzVm.Tags.PowerOff -and $TimeVm -lt [datetime]$AzVm.Tags.PowerOn) {
-				If ($WhatIf) {$Status = 'Simulation'}
-				Else {
-					$Result = Stop-AzureRmVm -Name $AzVm.Name -ResourceGroupName $AzureResourceGroup -Force
-					$Status = ($Result.StatusCode)
-				}
-				$Execution = 'Stopped'
-			} Else {$Execution = 'NotRequired'}
+			$azTime = [datetime]::Now
+			$TimeShort = $azTime.ToString('HH:mm')
+			$TimeVm = [System.TimeZoneInfo]::ConvertTimeFromUtc($TimeShort, [System.TimeZoneInfo]::FindSystemTimeZoneById($AzureVmTimeZone))
+			
+			### 00:00---On+++Off---00:00 ###
+			If ([datetime]$AzVm.Tags.PowerOn -lt [datetime]$AzVm.Tags.PowerOff) {
+				If ($TimeVm -gt [datetime]$AzVm.Tags.PowerOn -and $TimeVm -lt [datetime]$AzVm.Tags.PowerOff) {
+					If ($WhatIf) {$Status = 'Simulation'}
+					Else {
+						$Result = Start-AzureRmVm -Name $AzVm.Name -ResourceGroupName $AzureResourceGroup
+						$Status = ($Result.StatusCode)
+					}
+					$Execution = 'Started'
+				} Else {$Execution = 'NotRequired'}
+			
+			### 00:00+++Off---On+++00:00 ###
+			} Else {
+				If ($TimeVm -gt [datetime]$AzVm.Tags.PowerOn -or $TimeVm -lt [datetime]$AzVm.Tags.PowerOff) {
+					If ($WhatIf) {$Status = 'Simulation'}
+					Else {
+						$Result = Start-AzureRmVm -Name $AzVm.Name -ResourceGroupName $AzureResourceGroup
+						$Status = ($Result.StatusCode)
+					}
+					$Execution = 'Stopped'
+				} Else {$Execution = 'NotRequired'}
+			}
 		}
-		
-	### Not running VM (stopped/deallocated/suspended etc) ###
-	} Else {
-		$azTime = [datetime]::Now
-		$TimeShort = $azTime.ToString('HH:mm')
-		$TimeVm = [System.TimeZoneInfo]::ConvertTimeFromUtc($TimeShort, [System.TimeZoneInfo]::FindSystemTimeZoneById($AzureVmTimeZone))
-		
-		### 00:00---On+++Off---00:00 ###
-		If ([datetime]$AzVm.Tags.PowerOn -lt [datetime]$AzVm.Tags.PowerOff) {
-			If ($TimeVm -gt [datetime]$AzVm.Tags.PowerOn -and $TimeVm -lt [datetime]$AzVm.Tags.PowerOff) {
-				If ($WhatIf) {$Status = 'Simulation'}
-				Else {
-					$Result = Start-AzureRmVm -Name $AzVm.Name -ResourceGroupName $AzureResourceGroup
-					$Status = ($Result.StatusCode)
-				}
-				$Execution = 'Started'
-			} Else {$Execution = 'NotRequired'}
-		
-		### 00:00+++Off---On+++00:00 ###
-		} Else {
-			If ($TimeVm -gt [datetime]$AzVm.Tags.PowerOn -or $TimeVm -lt [datetime]$AzVm.Tags.PowerOff) {
-				If ($WhatIf) {$Status = 'Simulation'}
-				Else {
-					$Result = Start-AzureRmVm -Name $AzVm.Name -ResourceGroupName $AzureResourceGroup
-					$Status = ($Result.StatusCode)
-				}
-				$Execution = 'Stopped'
-			} Else {$Execution = 'NotRequired'}
+		$Prop = [ordered]@{
+			AzureVM       = $AzVm.Name
+			ResourceGroup = $AzureResourceGroup
+			PowerState    = (Get-Culture).TextInfo.ToTitleCase($AzVm.PowerState)
+			PowerOn       = $AzVm.Tags.PowerOn
+			PowerOff      = $AzVm.Tags.PowerOff
+			StateChange   = $Execution
+			StatusCode    = $Status
+			TimeStamp     = $TimeVm
 		}
 	}
-	
-	$Prop = [ordered]@{
-		AzureVM       = $AzVm.Name
-		ResourceGroup = $AzureResourceGroup
-		PowerState    = (Get-Culture).TextInfo.ToTitleCase($AzVm.PowerState)
-		PowerOn       = $AzVm.Tags.PowerOn
-		PowerOff      = $AzVm.Tags.PowerOff
-		StateChange   = $Execution
-		StatusCode    = $Status
-		TimeStamp     = $TimeVm
+Catch
+	{
+		$Prop = [ordered]@{
+			AzureVM       = $AzVm.Name
+			ResourceGroup = $AzureResourceGroup
+			PowerState    = (Get-Culture).TextInfo.ToTitleCase($AzVm.PowerState)
+			PowerOn       = $AzVm.Tags.PowerOn
+			PowerOff      = $AzVm.Tags.PowerOff
+			StateChange   = 'Unknown'
+			StatusCode    = 'Error'
+			TimeStamp     = $TimeVm
+		}
 	}
-	$Obj = New-Object PSObject -Property $Prop
-	Write-Output -InputObject $Obj
-		
+Finally
+	{
+		$Obj = New-Object PSObject -Property $Prop
+		Write-Output -InputObject $Obj
+	}	
 } #End Foreach
 } #End Workflow Apply-AzVmPowerStatePolicyWf
