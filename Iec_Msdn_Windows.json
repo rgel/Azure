@@ -88,8 +88,8 @@
     "vmPowerOffTime": "18:00",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
-    "ps1File": "https://prodinfrastg001lrsmsd.blob.core.windows.net/setup/VmCusScrExt.ps1",
-    "ps1Name": "VmCusScrExt.ps1",
+    "ps1File": "https://prodinfrastg001lrsmsd.blob.core.windows.net/setup/ExtMsdn.ps1",
+    "ps1Name": "ExtMsdn.ps1",
     "apiVersion": "2015-06-15"
   },
   "resources": [
