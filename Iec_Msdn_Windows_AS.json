@@ -46,6 +46,12 @@
         "description": "Subnet Name."
       }
     },
+    "vmnicStaticIP": {
+      "type": "string",
+      "metadata": {
+        "description": "VM Static IP Address."
+      }
+    },
     "storageAccountName": {
       "type": "string",
       "minLength": 3,
@@ -83,20 +89,20 @@
     }
   },
   "variables": {
-    "adminUsername": "AzAdmin",
-    "EnvironmentTag": "Msdn",
-    "publicIpName": "[concat(parameters('vmName'),'_pubip')]",
+    "adminUsername": "iecadmin",
+    "EnvironmentTag": "Prod",
     "location": "[resourceGroup().location]",
     "OSDiskName": "[concat(parameters('vmName'),'_osdisk')]",
     "nicName": "[concat(parameters('vmName'),'_vnic')]",
     "vmStorageAccountContainerName": "vhds",
-    "vmPowerOnTime": "05:00",
+    "vmPowerOnTime": "06:00",
     "vmPowerOffTime": "18:00",
-    "storageDiag": "prodstorediagnos001lrs",
+    "storageDiag": "proddiagstg001lrs",
+    "vnetResGroup": "[concat(variables('EnvironmentTag'),'_infra-rg')]",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
-    "ps1File": "https://prodinfrastg001lrsmsd.blob.core.windows.net/setup/VmCusScrExt.ps1",
-    "ps1Name": "VmCusScrExt.ps1",
+    "ps1File": "https://prodinfrastg001lrs.blob.core.windows.net/setup/ExtProd.ps1",
+    "ps1Name": "ExtProd.ps1",
     "apiVersion": "2015-06-15"
   },
   "resources": [
@@ -106,35 +112,20 @@
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[variables('location')]",
-      "tags": { "Environment": "[variables('EnvironmentTag')]" },
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]"
-      ],
+      "tags": {"Environment": "[variables('EnvironmentTag')]"},
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpName'))]"
-              },
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('vmnicStaticIP')]",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
             }
           }
         ]
-      }
-    },
-    {
-      "comments": "VM's Public IP address",
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIpName')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
@@ -154,8 +145,8 @@
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
-        "availabilitySet": {  
-          "id":"[resourceId('Microsoft.Compute/availabilitySets',parameters('avSet'))]"
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',parameters('avSet'))]"
         },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
