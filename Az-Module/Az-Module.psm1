@@ -98,7 +98,7 @@ Function Add-AzVmTag {
 	Dependencies ::	AzureRm PowerShell Module.
 	Version 1.0  ::	27-Jun-2016  :: Release.
 .LINK
-	https://goo.gl/vAxH2a
+	http://goo.gl/gvLUlN
 #>
 
 [CmdletBinding(DefaultParameterSetName='POWER')]
