@@ -8,6 +8,7 @@
 	Dependencies ::	Azure PowerShell modules.
 	Version 1.0  ::	19-Jun-2016 :: Release.
 	Version 1.1  ::	20-Jun-2016 :: Error handling added.
+	Version 1.2  ::	07-Jul-2016 :: -WhatIf parameter type changed from [switch] to [boolean].
 .LINK
 	http://www.ps1code.com/#!Azure-Automation-How-to-stopstart-Azure-VM-on-schedule/c1tye/576660770cf2426d7619470c
 #>
@@ -29,7 +30,7 @@ Param (
 	[string]$AzureVmTimeZone = 'Israel Standard Time'
 	,
 	[Parameter(Mandatory=$false,Position=5)]
-	[switch]$WhatIf
+	[boolean]$WhatIf
 )
 
 $ErrorActionPreference = 'Stop'
