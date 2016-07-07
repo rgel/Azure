@@ -30,7 +30,7 @@ Param (
 	[string]$AzureVmTimeZone = 'Israel Standard Time'
 	,
 	[Parameter(Mandatory=$false,Position=5)]
-	[boolean]$WhatIf
+	[boolean]$WhatIf = $false
 )
 
 $ErrorActionPreference = 'Stop'
