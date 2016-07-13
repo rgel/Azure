@@ -29,7 +29,7 @@ This filter gets AzureRm VM PowerState.
 
 This filter gets AzureRm VM Tag value.
 
-###### <b>3. [Add-AzVmTag</b>] (https://goo.gl/vAxH2a)
+###### <b>3. [Add-AzVmTag</b>] (http://goo.gl/gvLUlN)
 
 This cmdlet adds/sets Resource Tag/Tags for Azure VMs.
 
