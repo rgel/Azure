@@ -29,6 +29,10 @@ This filter gets AzureRm VM PowerState.
 
 This filter gets AzureRm VM Tag value.
 
+###### <b>3. [Add-AzVmTag</b>] (https://goo.gl/vAxH2a)
+
+This cmdlet adds/sets Resource Tag/Tags for Azure VMs.
+
 ### </b><ins>[Deploy-AzureVm.ps1</ins></b>] (https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)
 
 This script deploys multiple Azure VM from JSON templates.
