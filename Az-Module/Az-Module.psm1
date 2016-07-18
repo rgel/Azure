@@ -228,3 +228,81 @@ Process {
 } #End Process
 
 } #End Function Add-AzVmTag
+
+Function Get-AzOrphanedVhd {
+
+<#
+.SYNOPSIS
+	Get Azure orphaned VHD files.
+.DESCRIPTION
+	This cmdlet finds orphaned* Azure VM disks.
+	* - VHD files that are not registered to any existing VM.
+.EXAMPLE
+	PS C:\> Login-AzureRmAccount
+	PS C:\> Select-AzureRmSubscription
+	PS C:\> Get-AzOrphanedVhd
+.EXAMPLE
+	PS C:\> Get-AzOrphanedVhd |Format-Table -AutoSize
+.EXAMPLE
+	PS C:\> Get-AzOrphanedVhd |Export-Csv -NoTypeInformation '.\Vhd.csv'
+.INPUTS
+	No input.
+.OUTPUTS
+	[System.Management.Automation.PSCustomObject] PSObject collection.
+.NOTES
+	Author       ::	Roman Gelman.
+	Dependencies ::	AzureRm and Azure.Storage PowerShell Modules.
+	Version 1.0  ::	14-Jul-2016  :: Release.
+.LINK
+	www.ps1code.com
+#>
+
+	Begin {
+		$WarningPreference = 'SilentlyContinue'
+		$ErrorActionPreference = 'SilentlyContinue'
+		$rgxUrl = '^http(:|s:)/{2}'
+		$VmVhd = @()
+	}
+
+	Process {
+
+		### Get registerd in VM VHD in all ResourceGroups ###
+		Foreach ($AzRg in ($ResGroup = Get-AzureRmResourceGroup)) {
+			Foreach ($AzVm in ($VM = Get-AzureRmVM -ResourceGroupName ($AzRg.ResourceGroupName))) {
+				$VmVhd += ($AzVm.StorageProfile.OsDisk.Vhd.Uri) -replace ($rgxUrl,'')
+				Foreach ($DataDisk in $AzVm.StorageProfile.DataDisks) {
+					$VmVhd += ($DataDisk.Vhd.Uri) -replace ($rgxUrl,'')
+				}
+			}
+		}
+		### Get VHD located in all StorageAccouns ###
+		Foreach ($Vhd in ($SaVhd = Get-AzureRmStorageAccount |Get-AzureStorageContainer |Get-AzureStorageBlob |? {$_.Name -match '\.vhd$'})) {
+		
+			$ModifiedLocal = $Vhd.LastModified.LocalDateTime
+			$Now           = [datetime]::Now
+			### If a change was made less than 24 hours ago, but it was yesterday return one day and not zero ###
+			If (($Days = (New-TimeSpan -End $Now -Start $ModifiedLocal).Days) -eq 0) {
+				If ($ModifiedLocal.Day-$Now.Day -eq 1 -or $ModifiedLocal.Day -lt $Now.Day) {$Days = 1}
+			}
+
+			$Properties = [ordered]@{
+				VHD            = $Vhd.Name
+				StorageAccount = $Vhd.Context.StorageAccountName
+				SizeGB         = [Math]::Round($Vhd.Length/1GB,0)
+				Modified       = $ModifiedLocal.ToString('dd/MM/yyyy HH:mm')
+				LastWriteDays  = $Days
+				FullPath       = ($Vhd.ICloudBlob.Uri) -replace ($rgxUrl,'')
+				Snapshot       = $Vhd.ICloudBlob.IsSnapshot
+			}
+			$Object = New-Object PSObject -Property $Properties
+			### Return if not in the list only ###
+			If ($VmVhd -notcontains $Object.FullPath) {$Object}
+		}
+
+	} #End Process
+
+	End {}
+
+} #End Function Get-AzOrphanedVhd
+
+Export-ModuleMember -Alias '*' -Function '*'
