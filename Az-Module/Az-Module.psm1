@@ -254,7 +254,7 @@ Function Get-AzOrphanedVhd {
 	Dependencies ::	AzureRm and Azure.Storage PowerShell Modules.
 	Version 1.0  ::	14-Jul-2016  :: Release.
 .LINK
-	www.ps1code.com
+	http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud
 #>
 
 	Begin {
