@@ -33,6 +33,12 @@ This filter gets AzureRm VM Tag value.
 
 This cmdlet adds/sets Resource Tag/Tags for Azure VMs.
 
+###### <b>4. [Get-AzOrphanedVhd</b>] (http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud)
+
+This cmdlet finds `orphaned*` Azure VM disks.
+
+Orphaned virtual disks - these are `*.vhd` files that reside on Storage Accounts, but are not related to any VM.
+
 ### </b><ins>[Deploy-AzureVm.ps1</ins></b>] (https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)
 
 This script deploys multiple Azure VM from JSON templates.
