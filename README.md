@@ -19,25 +19,14 @@ To see the commands imported, type `Get-Command -Module Az-Module`.
 
 For help on each individual cmdlet or function, run `Get-Help CmdletName -Full [-Online][-Examples]`.
 
-##### <ins>Cmdlets:</ins>
+##### <ins>Az-Module Cmdlets:</ins>
 
-###### <b>1. [Get-AzVmPowerState</b>] (http://goo.gl/x8Wwjk)
-
-This filter gets AzureRm VM PowerState.
-
-###### <b>2. [Get-AzVmTag</b>] (http://goo.gl/x8Wwjk)
-
-This filter gets AzureRm VM Tag value.
-
-###### <b>3. [Add-AzVmTag</b>] (http://goo.gl/gvLUlN)
-
-This cmdlet adds/sets Resource Tag/Tags for Azure VMs.
-
-###### <b>4. [Get-AzOrphanedVhd</b>] (http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud)
-
-This cmdlet finds `orphaned*` Azure VM disks.
-
-Orphaned virtual disks - these are `*.vhd` files that reside on Storage Accounts, but are not related to any VM.
+|No|Cmdlet|Description|
+|----|----|----|
+|1|<b> [Get-AzVmPowerState</b>] (http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule)|This filter gets AzureRm VM PowerState|
+|2|<b> [Get-AzVmTag</b>] (http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule)|This filter gets AzureRm VM Tag value|
+|3|<b> [Add-AzVmTag</b>] (http://www.ps1code.com/single-post/2016/06/29/Azure-VM-Tag-automation)|This cmdlet adds/sets Resource Tag/Tags for Azure VMs|
+|4|<b> [Get-AzOrphanedVhd</b>] (http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud)|This cmdlet finds `orphaned*` Azure VM disks. Orphaned virtual disks - these are `*.vhd` files that reside on Storage Accounts, but are not related to any VM|
 
 ### </b><ins>[Deploy-AzureVm.ps1</ins></b>] (https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)
 
