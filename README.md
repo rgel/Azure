@@ -1,7 +1,7 @@
 # Azure Repo
 ## Microsoft Azure POSH scripts and modules
 
-### </b><ins>[Az-Module.psm1</ins></b>] (https://github.com/rgel/Azure/blob/master/Az-Module/Az-Module.psm1)
+### <b><ins>[Az-Module.psm1</ins></b>] (https://github.com/rgel/Azure/blob/master/Az-Module/Az-Module.psm1)
 
 To install this module, drop the entire '<b>Az-Module</b>' folder into one of your module directories.
 
@@ -19,7 +19,7 @@ To see the commands imported, type `Get-Command -Module Az-Module`.
 
 For help on each individual cmdlet or function, run `Get-Help CmdletName -Full [-Online][-Examples]`.
 
-##### <ins>Az-Module Cmdlets:</ins>
+#### <b><ins>Az-Module Cmdlets:</ins></b>
 
 |No|Cmdlet|Description|
 |----|----|----|
