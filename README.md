@@ -28,7 +28,7 @@ For help on each individual cmdlet or function, run `Get-Help CmdletName -Full [
 |3|<b> [Add-AzVmTag</b>] (http://www.ps1code.com/single-post/2016/06/29/Azure-VM-Tag-automation)|This cmdlet adds/sets Resource Tag/Tags for Azure VMs|
 |4|<b> [Get-AzOrphanedVhd</b>] (http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud)|This cmdlet finds `orphaned*` Azure VM disks. Orphaned virtual disks - these are `*.vhd` files that reside on Storage Accounts, but are not related to any VM|
 
-### </b><ins>[Deploy-AzureVm.ps1</ins></b>] (https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)
+### <ins>[Deploy-AzureVm.ps1</ins>] (https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)
 
 This script deploys multiple Azure VM from JSON templates.
 
@@ -36,16 +36,16 @@ In MSDN subscription it adds public IP and uses DHCP for internal IP address.
 
 For all another subscriptions no Public IP created and static internal IP assigned.
 
-### </b><ins>[New-SecureCred.ps1</ins></b>] (https://github.com/rgel/Azure/blob/master/New-SecureCred.ps1)
+### <ins>[New-SecureCred.ps1</ins>] (https://github.com/rgel/Azure/blob/master/New-SecureCred.ps1)
 
 This script creates file that contains encrypted password for Azure VM local admin account.
 
 "adminPassword" parameter from JSON template.
 
-### </b><ins>[Iec_Msdn_Windows.json</ins></b>] (https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows.json)
+### <ins>[Iec_Msdn_Windows.json</ins>] (https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows.json)
 
 JSON template example for standalone Azure Windows VMs in MSDN subscription.
 
-### </b><ins>[Iec_Msdn_Windows_AS.json</ins></b>] (https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows_AS.json)
+### <ins>[Iec_Msdn_Windows_AS.json</ins>] (https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows_AS.json)
 
 JSON template example for Availability Set members Azure Windows VMs in MSDN subscription.
