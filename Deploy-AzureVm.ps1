@@ -30,11 +30,12 @@
 .EXAMPLE
 	PS C:\> .\Deploy-AzureVm.ps1 -Guest RedHat -Project SAP
 .EXAMPLE
-	PS C:\> .\Deploy-AzureVm.ps1 -Environment TEST -Guest WindowsSql -Project IFN -Notes SQL
+	PS C:\> .\Deploy-AzureVm.ps1 -Environment TEST -Guest WindowsSql12 -Project IFN -Notes SQL -VMCount 2 -HighAvailable
 .NOTES
 	Author       ::	Roman Gelman.
-	Dependencies ::	Azure PS Modules.
+	Dependencies ::	AzureRm Posh Module.
 	Version 1.0  ::	20-Jun-2016  :: Release.
+	Version 1.1  ::	21-Jul-2016  :: Added more supported VM images [-Guest] parameter.
 .LINK
 	https://goo.gl/vAxH2a
 #>
@@ -54,7 +55,7 @@ Param (
 	[uint16]$VMCount = 1
 	,
 	[Parameter(Mandatory=$false,Position=2)]
-		[ValidateSet("Windows","WindowsSql","RedHat")]
+		[ValidateSet("Windows","WindowsSql12","WindowsSql14","WindowsSql16","RedHat")]
 		[Alias("VMGuest")]
 	[string]$Guest = 'Windows'
 	,
@@ -364,9 +365,11 @@ Begin {
 	$Stage++
 	$rgxVmSku = 'preview'
 	Switch -exact ($Guest) {
-		'Windows'    {$skuPublisher = 'MicrosoftWindowsServer'; $skuOffer = 'WindowsServer';       Break}
-		'WindowsSql' {$skuPublisher = 'MicrosoftSQLServer';     $skuOffer = 'SQL2012SP2-WS2012R2'; Break}
-		'RedHat'     {$skuPublisher = 'RedHat';                 $skuOffer = 'RHEL'}
+		'Windows'		{$skuPublisher = 'MicrosoftWindowsServer'; $skuOffer = 'WindowsServer';       Break}
+		'WindowsSql12'	{$skuPublisher = 'MicrosoftSQLServer';     $skuOffer = 'SQL2012SP3-WS2012R2'; Break}
+		'WindowsSql14'	{$skuPublisher = 'MicrosoftSQLServer';     $skuOffer = 'SQL2014SP1-WS2012R2'; Break}
+		'WindowsSql16'	{$skuPublisher = 'MicrosoftSQLServer';     $skuOffer = 'SQL2016RC3-WS2012R2'; Break}
+		'RedHat'		{$skuPublisher = 'RedHat';                 $skuOffer = 'RHEL'}
 	}
 	If ($NoFilter) {$setVMSku = (Get-AzureRmVMImageSku -Location ((Get-AzureRmResourceGroup -Name $ResourceGroup).Location) -Offer $skuOffer -PublisherName $skuPublisher).Skus |sort}
 	Else           {$setVMSku = (Get-AzureRmVMImageSku -Location ((Get-AzureRmResourceGroup -Name $ResourceGroup).Location) -Offer $skuOffer -PublisherName $skuPublisher |? {$_.Skus -notmatch $rgxVmSku}).Skus |sort}
@@ -425,7 +428,7 @@ Begin {
 		If ($FreeIndexCount -lt $VMCount) {For ($j=1; $j -le ($VMCount-$FreeIndexCount); $j++) {$FreeIndex += [string]([int]$VMIndex[-1] + $j)}} Else {$FreeIndex = $FreeIndex[0..($VMCount-1)]}
 		Foreach ($index in $FreeIndex) {$VM += "$rgxVMPrefix$index"}
 	}
-}
+} #End Begin
 
 Process {
 
