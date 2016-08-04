@@ -13,10 +13,10 @@ Filter Get-AzVmPowerState {
 	[System.String] AzureRm VM Power State.
 .NOTES
 	Author       ::	Roman Gelman.
-	Dependencies ::	Azure PS Modules.
+	Dependencies ::	AzureRm PowerShell Module.
 	Version 1.0  ::	20-Jun-2016  :: Release.
 .LINK
-	https://goo.gl/vAxH2a
+	http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule
 #>
 
 	If ($_ -is [Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine]) {
@@ -25,7 +25,7 @@ Filter Get-AzVmPowerState {
 		select @{N='PowerState';E={$_.Code.Split('/')[1]}}).PowerState)
 	}
 
-} #End Filter Get-AzVmPowerState
+} #EndFilter Get-AzVmPowerState
 
 Filter Get-AzVmTag {
 
@@ -46,10 +46,10 @@ Filter Get-AzVmTag {
 	[System.String] AzureRm VM Tag value (may be blank if not assigned).
 .NOTES
 	Author       ::	Roman Gelman.
-	Dependencies ::	Azure PS Modules.
+	Dependencies ::	AzureRm PowerShell Module.
 	Version 1.0  ::	20-Jun-2016  :: Release.
 .LINK
-	https://goo.gl/vAxH2a
+	http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule
 #>
 
 	Param ([string]$TagName)
@@ -58,7 +58,7 @@ Filter Get-AzVmTag {
 		($_).Tags.$TagName
 	}
 
-} #End Filter Get-AzVmTag
+} #EndFilter Get-AzVmTag
 
 Function Add-AzVmTag {
 
@@ -98,7 +98,7 @@ Function Add-AzVmTag {
 	Dependencies ::	AzureRm PowerShell Module.
 	Version 1.0  ::	27-Jun-2016  :: Release.
 .LINK
-	http://goo.gl/gvLUlN
+	http://www.ps1code.com/single-post/2016/06/29/Azure-VM-Tag-automation
 #>
 
 [CmdletBinding(DefaultParameterSetName='POWER')]
@@ -227,7 +227,7 @@ Process {
 	
 } #End Process
 
-} #End Function Add-AzVmTag
+} #EndFunction Add-AzVmTag
 
 Function Get-AzOrphanedVhd {
 
@@ -303,6 +303,6 @@ Function Get-AzOrphanedVhd {
 
 	End {}
 
-} #End Function Get-AzOrphanedVhd
+} #EndFunction Get-AzOrphanedVhd
 
 Export-ModuleMember -Alias '*' -Function '*'
