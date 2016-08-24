@@ -46,12 +46,6 @@
         "description": "Subnet Name."
       }
     },
-    "vmnicStaticIP": {
-      "type": "string",
-      "metadata": {
-        "description": "VM Static IP Address."
-      }
-    },
     "storageAccountName": {
       "type": "string",
       "minLength": 3,
@@ -89,20 +83,20 @@
     }
   },
   "variables": {
-    "adminUsername": "iecadmin",
-    "EnvironmentTag": "Prod",
+    "adminUsername": "AzAdmin",
+    "EnvironmentTag": "Msdn",
+    "publicIpName": "[concat(parameters('vmName'),'_pubip')]",
     "location": "[resourceGroup().location]",
     "OSDiskName": "[concat(parameters('vmName'),'_osdisk')]",
     "nicName": "[concat(parameters('vmName'),'_vnic')]",
     "vmStorageAccountContainerName": "vhds",
-    "vmPowerOnTime": "06:00",
+    "vmPowerOnTime": "05:00",
     "vmPowerOffTime": "18:00",
-    "storageDiag": "proddiagstg001lrs",
-    "vnetResGroup": "[concat(variables('EnvironmentTag'),'_infra-rg')]",
+    "storageDiag": "prodstorediagnos001lrs",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
-    "ps1File": "https://prodinfrastg001lrs.blob.core.windows.net/setup/ExtProd.ps1",
-    "ps1Name": "ExtProd.ps1",
+    "ps1File": "https://prodinfrastg001lrsmsd.blob.core.windows.net/setup/ExtMsdn.ps1",
+    "ps1Name": "ExtMsdn.ps1",
     "apiVersion": "2015-06-15"
   },
   "resources": [
@@ -112,20 +106,35 @@
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[variables('location')]",
-      "tags": {"Environment": "[variables('EnvironmentTag')]"},
+      "tags": { "Environment": "[variables('EnvironmentTag')]" },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]"
+      ],
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[parameters('vmnicStaticIP')]",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpName'))]"
+              },
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
             }
           }
         ]
+      }
+    },
+    {
+      "comments": "VM's Public IP address",
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIpName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
@@ -145,8 +154,8 @@
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',parameters('avSet'))]"
+        "availabilitySet": {  
+          "id":"[resourceId('Microsoft.Compute/availabilitySets',parameters('avSet'))]"
         },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -154,7 +163,10 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[variables('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "timeZone": "Israel Standard Time"
+          }
         },
         "storageProfile": {
           "imageReference": {
