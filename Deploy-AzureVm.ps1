@@ -34,10 +34,11 @@
 .NOTES
 	Author       ::	Roman Gelman.
 	Dependencies ::	AzureRm Posh Module.
-	Version 1.0  ::	20-Jun-2016  :: Release.
-	Version 1.1  ::	21-Jul-2016  :: Added more supported VM images [-Guest] parameter.
+	Version 1.0  ::	20-Jun-2016 :: Release.
+	Version 1.1  ::	21-Jul-2016 :: Improvement - Added more supported VM images [-Guest] parameter.
+	Version 1.2  ::	24-Aug-2016 :: Bugfix - StorageAccount type determining changed to generate VMSize list.
 .LINK
-	https://goo.gl/vAxH2a
+	http://ps1code.com/
 #>
 
 [CmdletBinding()]
@@ -46,7 +47,7 @@ Param (
 
 	[Parameter(Mandatory=$false,Position=0)]
 		[ValidateSet("PROD","DEV","TEST","DMZ","LABS","MSDN")]
-		[Alias("Domain","Subscription")]
+		[Alias("Domain","Env")]
 	[string]$Environment = "MSDN"
 	,
 	[Parameter(Mandatory=$false,Position=1)]
@@ -354,9 +355,9 @@ Begin {
 	### JSON :: [parameters('vmSize')] ###
 	$Stage++
 	$rgxVMSize = '_(D|G)S'
-	If ($StorageAccount.AccountType -notmatch 'premium') {$setVMSiz = (Get-AzureRmVMSize -Location ((Get-AzureRmResourceGroup -Name $ResourceGroup).Location)).Name |sort}
+	If ($StorageAccount.Sku.Tier -notmatch 'premium') {$setVMSiz = (Get-AzureRmVMSize -Location ((Get-AzureRmResourceGroup -Name $ResourceGroup).Location)).Name |sort}
 	Else {$setVMSiz = (Get-AzureRmVMSize -Location ((Get-AzureRmResourceGroup -Name $ResourceGroup).Location) |? {$_.Name -match $rgxVMSize}).Name |sort}
-	$VMSize = Write-Menu -Menu $setVMSiz -Shift 1 -Prompt "Choice VM Size" -Header "[Stage $Stage..$Stages] Available VM Sizes:"
+	$VMSize = Write-Menu -Menu $setVMSiz -Shift 1 -Prompt "Choice VM Size" -Header "[Stage $Stage..$Stages] Available VM Sizes for '$($StorageAccount.Sku.Name)' StorageAccount:"
 	
 	### Image parameters                       ###
 	### JSON :: [parameters('imagePublisher')] ###
