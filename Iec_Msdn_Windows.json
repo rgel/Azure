@@ -153,7 +153,10 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[variables('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "timeZone": "Israel Standard Time"
+          }
         },
         "storageProfile": {
           "imageReference": {
