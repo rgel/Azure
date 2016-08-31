@@ -19,7 +19,11 @@ To see the commands imported, type `Get-Command -Module Az-Module`.
 
 For help on each individual cmdlet or function, run `Get-Help CmdletName -Full [-Online][-Examples]`.
 
-To start using the module functions connect to your Azure account with `Login-AzureRmAccount` cmdlet and optionally select your target subscription with `Select-AzureRmSubscription` cmdlet.
+To start using the module functions:
+
++ Install <b>Azure Resource Manager Module</b> module from Microsoft PSGallery by `Install-Module AzureRM`.
++ Connect to your Azure account by `Login-AzureRmAccount` cmdlet.
++ Optionally, select your target subscription by `Select-AzureRmSubscription` cmdlet.
 
 #### <b><ins>Az-Module Cmdlets:</ins></b>
 
