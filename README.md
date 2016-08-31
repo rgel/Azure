@@ -33,6 +33,8 @@ To start using the module functions:
 |2|<b> [Get-AzVmTag</b>] (http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule)|This filter gets AzureRm VM Tag value|
 |3|<b> [Add-AzVmTag</b>] (http://www.ps1code.com/single-post/2016/06/29/Azure-VM-Tag-automation)|This cmdlet adds/sets Resource Tag/Tags for Azure VMs|
 |4|<b> [Get-AzOrphanedVhd</b>] (http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud)|This cmdlet finds `orphaned*` Azure VM disks. Orphaned virtual disks - these are `*.vhd` files that reside on Storage Accounts, but are not related to any VM|
+|5|<b> [Get-AzVmDisk</b>] (http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell)|This function gets Azure VM Virtual Disks|
+|6|<b> [New-AzVmDisk</b>] (http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell)|This function creates and attaches a new data disk to an Azure Virtual Machine|
 
 ### <ins>[Deploy-AzureVm.ps1</ins>] (https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)
 
