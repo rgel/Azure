@@ -334,7 +334,7 @@ Function Get-AzVmDisk {
 	Dependencies ::	AzureRM PowerShell Module.
 	Version 1.0  ::	31-Aug-2016  :: Release.
 .LINK
-	http://ps1code.com
+	http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell
 #>
 
 [CmdletBinding()]
@@ -442,7 +442,7 @@ Function New-AzVmDisk {
 	Dependencies ::	AzureRM PowerShell Module.
 	Version 1.0  ::	31-Aug-2016  :: Release.
 .LINK
-	http://ps1code.com
+	http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell
 #>
 
 [CmdletBinding()]
