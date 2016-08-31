@@ -305,4 +305,264 @@ Function Get-AzOrphanedVhd {
 
 } #EndFunction Get-AzOrphanedVhd
 
+Function Get-AzVmDisk {
+
+<#
+.SYNOPSIS
+	Get Azure VM Virtual Disks.
+.DESCRIPTION
+	This cmdlet gets Azure VM Virtual Disks.
+.PARAMETER VM
+	Azure VM.
+.PARAMETER DiskType
+	Virtual Disk Type.
+.EXAMPLE
+	PS C:\> Get-AzureRmVM -ResourceGroupName 'YourResourceGroupName' -VMName 'azvm1' |Get-AzVmDisk
+	Get all Virtual Disks for a given VM.
+.EXAMPLE
+	PS C:\> Get-AzureRmVM -ResourceGroupName 'YourResourceGroupName' |sort Name |Get-AzVmDisk |select * -exclude Path |ft -au
+	Get all Virtual Disks for all VM in specific ResourceGroup.
+.EXAMPLE
+	PS C:\> Get-AzureRmVM -ResourceGroupName 'YourResourceGroupName' |Get-AzVmDisk -DiskType DataDisk
+	Get only DataDisks for all VM in specific ResourceGroup.
+.INPUTS
+	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine[]] Azure VM object(s), returned by 'Get-AzureRmVm' cmdlet.
+.OUTPUTS
+	[System.Management.Automation.PSCustomObject] PSObject collection.
+.NOTES
+	Author       ::	Roman Gelman.
+	Dependencies ::	AzureRM PowerShell Module.
+	Version 1.0  ::	31-Aug-2016  :: Release.
+.LINK
+	http://ps1code.com
+#>
+
+[CmdletBinding()]
+
+Param (
+
+	[Parameter(Mandatory,Position=1,ValueFromPipeline)]
+		[Alias("AzureVm")]
+	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine[]]$VM
+	,
+	[Parameter(Mandatory=$false,Position=2)]
+		[ValidateSet("OSDisk","DataDisk","All")]
+	[string]$DiskType = 'All'
+)
+
+Begin {
+
+	$rgxUri = '^http(:|s:)/{2}(?<StorageAccount>.+?)\..+/(?<Container>.+)/(?<Vhd>.+)$'
+
+} #EndBegin
+
+Process {
+
+	If ('OSDisk','All' -contains $DiskType) {
+		$VmOsDisk   = $VM.StorageProfile.OsDisk
+		$OsDiskUri  = $VmOsDisk.Vhd.Uri
+		$OsDiskUriX = [regex]::Match($OsDiskUri, $rgxUri)
+		
+		$Properties = [ordered]@{
+			VM             = $VM.Name
+			VMSize         = $VM.HardwareProfile.VmSize
+			DiskName       = $VmOsDisk.Name
+			DiskType       = 'OSDisk'
+			Lun            = -1
+			StorageAccount = $OsDiskUriX.Groups['StorageAccount'].Value
+			Container      = $OsDiskUriX.Groups['Container'].Value
+			Vhd            = $OsDiskUriX.Groups['Vhd'].Value
+			Path           = $OsDiskUri
+			SizeGB         = 0
+			Cache          = $VmOsDisk.Caching
+			Created        = $VmOsDisk.CreateOption
+		}
+		$Object = New-Object PSObject -Property $Properties
+		$Object
+	}
+	
+	If ('DataDisk','All' -contains $DiskType) {
+		$VmDataDisks = $VM.StorageProfile.DataDisks
+		Foreach ($DataDisk in $VmDataDisks) {
+			$DataDiskUri  = $DataDisk.Vhd.Uri
+			$DataDiskUriX = [regex]::Match($DataDiskUri, $rgxUri)
+			
+			$Properties   = [ordered]@{
+				VM             = $VM.Name
+				VMSize         = $VM.HardwareProfile.VmSize
+				DiskName       = $DataDisk.Name
+				DiskType       = 'DataDisk'
+				Lun            = $DataDisk.Lun
+				StorageAccount = $DataDiskUriX.Groups['StorageAccount'].Value
+				Container      = $DataDiskUriX.Groups['Container'].Value
+				Vhd            = $DataDiskUriX.Groups['Vhd'].Value
+				Path           = $DataDiskUri
+				SizeGB         = $DataDisk.DiskSizeGB
+				Cache          = $DataDisk.Caching
+				Created        = $DataDisk.CreateOption
+			}
+			$Object = New-Object PSObject -Property $Properties
+			$Object
+		}
+	}
+} #EndProcess
+
+} #EndFunction Get-AzVmDisk
+
+Function New-AzVmDisk {
+
+<#
+.SYNOPSIS
+	Add a new data disk to an Azure VM.
+.DESCRIPTION
+	This cmdlet creates and attaches a new data disk to an Azure Virtual Machine.
+.PARAMETER VM
+	Azure VM.
+.PARAMETER StorageAccount
+	From where to take a StorageAccount name.
+.PARAMETER SizeGB
+	Disk size in GiB.
+.PARAMETER Caching
+	Disk caching mode.
+.EXAMPLE
+	PS C:\> Get-AzureRmVM -ResourceGroupName 'YourResourceGroupName' -VMName 'azvm1' |New-AzVmDisk
+	Add a new data disk with all default options.
+.EXAMPLE
+	PS C:\> Get-AzureRmVM -ResourceGroupName 'YourResourceGroupName' -VMName 'azvm1' |New-AzVmDisk -StorageAccount Prompt
+	Give an option to pick a StorageAccount from a menu.
+.EXAMPLE
+	PS C:\> Get-AzureRmVM -ResourceGroupName 'YourResourceGroupName' -VMName 'azvm1' |New-AzVmDisk -SizeGB 10 -Caching SqlLog
+	Add 10 GiB disk with caching mode recommended by Microsoft for SQL logs.
+.INPUTS
+	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine] Azure VM object, returned by 'Get-AzureRmVm' cmdlet.
+.OUTPUTS
+	[System.Management.Automation.PSCustomObject] PSObject collection.
+.NOTES
+	Author       ::	Roman Gelman.
+	Dependencies ::	AzureRM PowerShell Module.
+	Version 1.0  ::	31-Aug-2016  :: Release.
+.LINK
+	http://ps1code.com
+#>
+
+[CmdletBinding()]
+
+Param (
+
+	[Parameter(Mandatory,Position=1,ValueFromPipeline)]
+		[Alias("AzureVm")]
+	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine]$VM
+	,
+	[Parameter(Mandatory=$false,Position=2)]
+		[ValidateSet("OSDisk","FirstDataDisk","Prompt")]
+		[Alias("Storage")]
+	[string]$StorageAccount = 'OSDisk'
+	,
+	[Parameter(Mandatory=$false,Position=3)]
+		[ValidateRange(10,1023)]
+	[uint16]$SizeGB = 100
+	,
+	[Parameter(Mandatory=$false,Position=4)]
+		[ValidateSet("None","ReadOnly","ReadWrite","SqlLog","SqlTempDB","SqlData")]
+	[string]$Caching = 'None'
+)
+
+Begin {
+
+	$ErrorActionPreference = 'SilentlyContinue'
+	$WarningPreference     = 'SilentlyContinue'
+	$DataDiskSuffix = '_datadisk'
+	$rgxDataDiskIndex = $DataDiskSuffix + '(\d+)\.vhd$'
+	Switch -regex ($Caching) {
+		'^sql(t|d)' {$Cache = 'ReadOnly'; Break}
+		'^sqll'     {$Cache = 'None'    ; Break}
+		Default     {$Cache = $Caching}
+	}
+	
+} #EndBegin
+
+Process {
+
+	$VmDisks = Get-AzVmDisk -VM $VM
+	
+	Write-Host "`n:: BEFORE ::" -ForegroundColor Yellow
+	$VmDisks |select * -ExcludeProperty VM*,Path |Format-Table -AutoSize
+	
+	$ResourceGroup = $VM.ResourceGroupName
+	
+	$OsDisk    = $VmDisks |? {$_.DiskType -eq 'OSDisk'}
+	$DataDisks = $VmDisks |? {$_.DiskType -eq 'DataDisk'} |
+	select *,@{N='Index';E={(([regex]::Match($_.Vhd, $rgxDataDiskIndex).Groups[1].Value) -as [int])}} |sort Index
+	
+	### DataDisk Index&Lun ###
+	If ($DataDisks) {
+		$DataDiskIndex = ($DataDisks[-1].Index -as [int]) + 1
+		If (!$DataDiskIndex) {$DataDiskIndex = 1}
+		$DataDiskLun = ($DataDisks[-1].Lun -as [int]) + 1
+	} Else {
+		$DataDiskIndex = 1
+		$DataDiskLun = 0
+	}
+	
+	### DataDisk Name ###
+	$DataDiskName = $VM.Name + $DataDiskSuffix + $DataDiskIndex
+	
+	### DataDisk Vhd Name ###
+	$DataDiskVhd = $DataDiskName+'.vhd'
+	
+	Switch -exact ($StorageAccount) {
+	
+		'OSDisk'
+		{
+			$StorageAccountName = $OsDisk.StorageAccount
+			$DataDiskUri = ($OsDisk.Path).Replace($OsDisk.Vhd, $DataDiskVhd)
+			Break
+		}
+		'FirstDataDisk'
+		{
+			If ($DataDisks) {
+				$StorageAccountName = $DataDisks[0].StorageAccount
+				$DataDiskUri = ($DataDisks[0].Path).Replace($DataDisks[0].Vhd, $DataDiskVhd)
+			} Else {
+				$StorageAccountName = $OsDisk.StorageAccount
+				$DataDiskUri = ($OsDisk.Path).Replace($OsDisk.Vhd, $DataDiskVhd)
+			}
+			Break
+		}
+		'Prompt'
+		{
+			$StorageAccounts = Get-AzureRmStorageAccount -ResourceGroupName $ResourceGroup |sort StorageAccountName
+			
+			If (!$StorageAccounts) {
+				$StorageAccountName = $OsDisk.StorageAccount
+				$DataDiskUri = ($OsDisk.Path).Replace($OsDisk.Vhd, $DataDiskVhd)
+			} Else {
+				$StorageAccountPrompt = Write-Menu -Menu $StorageAccounts -Shift 1 -Prompt "Choice StorageAccount for your DataDisk" -Header "Available StorageAccounts in the [$($VM.ResourceGroupName)] ResourceGroup:" -PropertyToShow StorageAccountName
+				$StorageAccountName = $StorageAccountPrompt.StorageAccountName
+				$DataDiskUri = ($OsDisk.Path).Replace($OsDisk.Vhd, $DataDiskVhd).Replace($OsDisk.StorageAccount, $StorageAccountName)
+			}
+		}
+		
+	} #EndSwitch
+	
+	$null = Add-AzureRmVMDataDisk -VM $VM -Name $DataDiskName -Lun $DataDiskLun -CreateOption empty -DiskSizeInGB $SizeGB -VhdUri $DataDiskUri -Caching $Cache
+	
+	Write-Progress -Activity "Adding Virtual DataDisk to VM [$($VM.Name)]" `
+	-Status "Updating VM configuration ..." `
+	-CurrentOperation "StorageAccount [$StorageAccountName] | DiskName [$DataDiskName] | LUN [$DataDiskLun] | Size [$SizeGB GiB] | Caching [$Cache]"
+	
+	$null = Update-AzureRmVM -VM $VM -ResourceGroupName $ResourceGroup -ErrorVariable ErrUpdateVm
+	If ($ErrUpdateVm) {$ErrMsg = $ErrUpdateVm.Exception.Message; Write-Host $ErrMsg -ForegroundColor Yellow}
+	
+	Write-Host "`n:: AFTER ::" -ForegroundColor Yellow
+	Get-AzureRmVm -ResourceGroupName $ResourceGroup -VMName $VM.Name |Get-AzVmDisk |select * -ExcludeProperty VM*,Path |Format-Table -AutoSize
+	
+} #EndProcess
+
+End {
+	Write-Progress -Activity "Completed" -Completed
+}
+
+} #EndFunction New-AzVmDisk
+
 Export-ModuleMember -Alias '*' -Function '*'
