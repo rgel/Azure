@@ -1,13 +1,13 @@
 # ![azureautomation2](https://cloud.githubusercontent.com/assets/6964549/17082193/9aade278-517d-11e6-8db1-1f04fb786e81.png) Azure Repo
 ## Microsoft Azure POSH scripts and modules
 
-### <ins>[Az-Module.psm1</ins>] (https://github.com/rgel/Azure/blob/master/Az-Module/Az-Module.psm1)
+### <ins>[Az-Module</ins>] (https://github.com/rgel/Azure/tree/master/Az-Module)
 
 To install this module, drop the entire '<b>Az-Module</b>' folder into one of your module directories.
 
 The default PowerShell module paths are listed in the `$env:PSModulePath` environment variable.
 
-To make it look better, split the paths in this manner `$env:PSModulePath -split ';'`
+To make it look better, split the paths in this manner: `$env:PSModulePath -split ';'`
 
 The default per-user module path is: `"$env:HOMEDRIVE$env:HOMEPATH\Documents\WindowsPowerShell\Modules"`.
 
