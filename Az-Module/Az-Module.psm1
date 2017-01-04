@@ -565,4 +565,91 @@ End {
 
 } #EndFunction New-AzVmDisk
 
+Function New-AzCredProfile {
+
+<#
+.SYNOPSIS
+	Set your PowerShell session to automatically login to the Azure.
+.DESCRIPTION
+	The New-AzCredProfile cmdlet saves your Azure credentials to a secure JSON file
+	and sets your PowerShell session to automatically login to the Azure.
+	In addition you will be prompted to select your Azure subscription from the list
+	and to select and to save to the variable your current ResourceGroup.
+.PARAMETER AzureProfilePath
+	Specifies the path of the file to which to save the Azure authentication info.
+.PARAMETER ShowProfile
+	Open your PowerShell profile script ($PROFILE) by your favorite script editor.
+.EXAMPLE
+	PS C:\> New-AzCredProfile
+.EXAMPLE
+	PS C:\> New-AzCredProfile -ShowProfile
+.EXAMPLE
+	PS C:\> New-AzCredProfile "$($env:USERPROFILE)\Documents\Azure.json"
+	Save the JSON in an alternate location.
+.NOTES
+	Author       ::	Roman Gelman
+	Dependencies ::	AzureRM PowerShell Module
+	Version 1.0  ::	04-Jan-2017 :: [Release]
+.LINK
+	http://www.ps1code.com/
+#>
+
+[CmdletBinding()]
+[OutputType([bool])]
+
+Param (
+	[Parameter(Mandatory=$false,Position=0,HelpMessage="Secure JSON full path")]
+		[ValidatePattern("\.json$")]
+		[ValidateScript({Test-Path (Split-Path $_) -PathType 'Container'})]
+	[string]$AzureProfilePath = "$(Split-Path $PROFILE)\azure.json"
+	,
+	[Parameter(Mandatory=$false)]
+	[switch]$ShowProfile
+)
+
+Begin {
+	$ErrorActionPreference = 'Stop'
+	
+	### Get your Azure credentials ###
+	$AzCred = Get-Credential -Message 'Azure Credentials' -User 'user@onmicrosoft.com'
+	If (!$AzCred.GetNetworkCredential().Password) {Throw "You must provide a password for the [$($AzCred.GetNetworkCredential().UserName)] account!"}
+	
+	### Connect to your Azure environment ###
+	Try {$AzProfile = Login-AzureRmAccount -Credential $AzCred} Catch {Throw "Failed to login to the Azure, please validate your credentials!"}
+} #EndBegin
+
+Process {
+	### Create your PowerShell profile script if doesn't exists yet ###
+	Try {If (!(Test-Path $PROFILE -PathType Leaf)) {New-Item -ItemType File -Force $PROFILE}} Catch {Throw "Failed to create your PowerShell profile script [$PROFILE]!"}
+	
+	### Save your Azure profile credentials ###
+	Try {Save-AzureRmProfile -Path $AzureProfilePath} Catch {Throw "Failed to save your Azure Profile [$AzureProfilePath]!"}
+	
+	### Embed the Azure profile initialization into your PowerShell profile ###
+	$InitAzProfile = "Select-AzureRmProfile -Path $AzureProfilePath"
+	$SelectSubscription = "Select-AzureRmSubscription -SubscriptionName ((Write-Menu -Menu (Get-AzureRmSubscription -WA SilentlyContinue) -PropertyToShow SubscriptionName -Header 'Welcome to Azure' -Prompt 'Select Subscription' -Shift 1).SubscriptionName)"
+	$SelectResourceGroup = "`$AzResourceGroup = (Write-Menu -Menu (Get-AzureRmResourceGroup -WA SilentlyContinue) -PropertyToShow ResourceGroupName -Header 'Initialize variable [`$AzResourceGroup]' -Prompt 'Select ResourceGroup' -Shift 1).ResourceGroupName"
+	Try
+	{
+		If ((Get-Content $PROFILE -Raw) -notmatch 'Select-AzureRmProfile') {
+			"`n### AZURE AUTO LOGIN ###" |Out-File $PROFILE -Append -Confirm:$false
+			$InitAzProfile               |Out-File $PROFILE -Append -Confirm:$false
+			$SelectSubscription          |Out-File $PROFILE -Append -Confirm:$false
+			$SelectResourceGroup         |Out-File $PROFILE -Append -Confirm:$false
+			
+			### Open your PowerShell profile script ###
+			If ($ShowProfile) {Invoke-Item $PROFILE}
+			return $true
+		} Else {return $true}
+	}
+	Catch
+	{
+		return $false
+	}
+} #EndProcess
+
+End {}
+
+} #EndFunction New-AzCredProfile
+
 Export-ModuleMember -Alias '*' -Function '*'
