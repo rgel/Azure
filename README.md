@@ -35,6 +35,7 @@ To start using the module functions:
 |4|<b> [Get-AzOrphanedVhd</b>] (http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud)|This cmdlet finds `orphaned*` Azure VM disks. Orphaned virtual disks - these are `*.vhd` files that reside on Storage Accounts, but are not related to any VM|
 |5|<b> [Get-AzVmDisk</b>] (http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell)|This function gets Azure VM Virtual Disks|
 |6|<b> [New-AzVmDisk</b>] (http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell)|This function creates and attaches a new data disk to an Azure Virtual Machine|
+|7|<b> [New-AzCredProfile</b>] (http://www.ps1code.com/single-post/2017/01/04/How-to-login-to-the-Azure-automatically)|This function sets your PowerShell session to automatically login to the Azure|
 
 ### <ins>[Deploy-AzureVm.ps1</ins>] (https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)
 
