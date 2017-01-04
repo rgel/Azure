@@ -591,7 +591,7 @@ Function New-AzCredProfile {
 	Dependencies ::	AzureRM PowerShell Module
 	Version 1.0  ::	04-Jan-2017 :: [Release]
 .LINK
-	http://www.ps1code.com/
+	http://www.ps1code.com/single-post/2017/01/04/How-to-login-to-the-Azure-automatically
 #>
 
 [CmdletBinding()]
