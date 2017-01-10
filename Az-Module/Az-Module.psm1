@@ -8,19 +8,20 @@ Filter Get-AzVmPowerState {
 .EXAMPLE
 	PS C:\> Get-AzureRmVM -ResourceGroupName $MyAzureResourceGroup |select Name,@{N='PowerState';E={$_ |Get-AzVmPowerState}} |ft -au
 .INPUTS
-	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine] Azure VM object, returned by Get-AzureRmVm cmdlet.
+	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine[]] Azure VM object(s), returned by `Get-AzureRmVm` cmdlet.
 .OUTPUTS
 	[System.String] AzureRm VM Power State.
 .NOTES
-	Author       ::	Roman Gelman.
-	Dependencies ::	AzureRm PowerShell Module.
-	Version 1.0  ::	20-Jun-2016  :: Release.
+	Author      :: Roman Gelman
+	Dependency  :: AzureRm PowerShell Module
+	Version 1.0 :: 20-Jun-2016 :: [Release]
+	Version 1.1 :: 10-Jan-2017 :: [Change] :: Warnings suppressed
 .LINK
 	http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule
 #>
 
 	If ($_ -is [Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine]) {
-		(Get-Culture).TextInfo.ToTitleCase((Get-AzureRmVM -Name $_.Name -ResourceGroupName $_.ResourceGroupName -Status | `
+		(Get-Culture).TextInfo.ToTitleCase((Get-AzureRmVM -WA SilentlyContinue -Name $_.Name -ResourceGroupName $_.ResourceGroupName -Status | `
 		select -expand Statuses |? {$_.Code -match 'PowerState/'} | `
 		select @{N='PowerState';E={$_.Code.Split('/')[1]}}).PowerState)
 	}
@@ -41,13 +42,13 @@ Filter Get-AzVmTag {
 	PS C:\> Get-AzureRmVM -ResourceGroupName $MyAzureResourceGroup |select Name,@{N='PowerOn';E={$_ |Get-AzVmTag -TagName 'PowerOn'}},@{N='PowerOff';E={$_ |Get-AzVmTag -TagName 'PowerOff'}} |ft -au
 	Get two tags 'PowerOn' and 'PowerOff'.
 .INPUTS
-	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine] Azure VM object, returned by Get-AzureRmVm cmdlet.
+	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine] Azure VM object(s), returned by `Get-AzureRmVm` cmdlet.
 .OUTPUTS
 	[System.String] AzureRm VM Tag value (may be blank if not assigned).
 .NOTES
-	Author       ::	Roman Gelman.
-	Dependencies ::	AzureRm PowerShell Module.
-	Version 1.0  ::	20-Jun-2016  :: Release.
+	Author       ::	Roman Gelman
+	Dependencies ::	AzureRm PowerShell Module
+	Version 1.0  ::	20-Jun-2016  :: [Release]
 .LINK
 	http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule
 #>
@@ -94,9 +95,9 @@ Function Add-AzVmTag {
 .OUTPUTS
 	[System.Management.Automation.PSCustomObject] PSObject collection.
 .NOTES
-	Author       ::	Roman Gelman.
-	Dependencies ::	AzureRm PowerShell Module.
-	Version 1.0  ::	27-Jun-2016  :: Release.
+	Author      :: Roman Gelman
+	Dependency  :: AzureRm PowerShell Module
+	Version 1.0 :: 27-Jun-2016 :: [Release]
 .LINK
 	http://www.ps1code.com/single-post/2016/06/29/Azure-VM-Tag-automation
 #>
@@ -250,9 +251,9 @@ Function Get-AzOrphanedVhd {
 .OUTPUTS
 	[System.Management.Automation.PSCustomObject] PSObject collection.
 .NOTES
-	Author       ::	Roman Gelman.
-	Dependencies ::	AzureRm and Azure.Storage PowerShell Modules.
-	Version 1.0  ::	14-Jul-2016  :: Release.
+	Author      :: Roman Gelman
+	Dependency  :: AzureRm and Azure.Storage PowerShell Modules
+	Version 1.0 :: 14-Jul-2016  :: [Release]
 .LINK
 	http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud
 #>
@@ -330,9 +331,9 @@ Function Get-AzVmDisk {
 .OUTPUTS
 	[System.Management.Automation.PSCustomObject] PSObject collection.
 .NOTES
-	Author       ::	Roman Gelman.
-	Dependencies ::	AzureRM PowerShell Module.
-	Version 1.0  ::	31-Aug-2016  :: Release.
+	Author      :: Roman Gelman
+	Dependency  :: AzureRM PowerShell Module
+	Version 1.0 :: 31-Aug-2016 :: [Release]
 .LINK
 	http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell
 #>
@@ -438,9 +439,9 @@ Function New-AzVmDisk {
 .OUTPUTS
 	[System.Management.Automation.PSCustomObject] PSObject collection.
 .NOTES
-	Author       ::	Roman Gelman.
-	Dependencies ::	AzureRM PowerShell Module.
-	Version 1.0  ::	31-Aug-2016  :: Release.
+	Author      :: Roman Gelman
+	Dependency  :: AzureRM PowerShell Module
+	Version 1.0 :: 31-Aug-2016 :: [Release]
 .LINK
 	http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell
 #>
@@ -574,7 +575,7 @@ Function New-AzCredProfile {
 	The New-AzCredProfile cmdlet saves your Azure credentials to a secure JSON file
 	and sets your PowerShell session to automatically login to the Azure.
 	In addition you will be prompted to select your Azure subscription from the list
-	and to select and to save to the variable your current ResourceGroup.
+	and select and save to the variable your current ResourceGroup.
 .PARAMETER AzureProfilePath
 	Specifies the path of the file to which to save the Azure authentication info.
 .PARAMETER ShowProfile
@@ -587,9 +588,14 @@ Function New-AzCredProfile {
 	PS C:\> New-AzCredProfile "$($env:USERPROFILE)\Documents\Azure.json"
 	Save the JSON in an alternate location.
 .NOTES
-	Author       ::	Roman Gelman
-	Dependencies ::	AzureRM PowerShell Module
-	Version 1.0  ::	04-Jan-2017 :: [Release]
+	Author      :: Roman Gelman
+	Dependency  :: AzureRM PowerShell Module
+	Requirement :: AzureRM Module version 2.0+
+	Version 1.0 :: 04-Jan-2017 :: [Release]
+	Version 1.1 :: 10-Jan-2017 ::
+	[Bugfix]  :: Empty `$PROFILE` file was not processed
+	[Change]  :: Suppressed confirmation on existing Azure profile
+	[Feature] :: Added command to populate VM list in the selected Resource Group
 .LINK
 	http://www.ps1code.com/single-post/2017/01/04/How-to-login-to-the-Azure-automatically
 #>
@@ -623,24 +629,26 @@ Process {
 	Try {If (!(Test-Path $PROFILE -PathType Leaf)) {New-Item -ItemType File -Force $PROFILE}} Catch {Throw "Failed to create your PowerShell profile script [$PROFILE]!"}
 	
 	### Save your Azure profile credentials ###
-	Try {Save-AzureRmProfile -Path $AzureProfilePath} Catch {Throw "Failed to save your Azure Profile [$AzureProfilePath]!"}
+	Try {Save-AzureRmProfile -Path $AzureProfilePath -Force} Catch {Throw "Failed to save your Azure Profile [$AzureProfilePath]!"}
 	
 	### Embed the Azure profile initialization into your PowerShell profile ###
 	$InitAzProfile = "Select-AzureRmProfile -Path $AzureProfilePath"
 	$SelectSubscription = "Select-AzureRmSubscription -SubscriptionName ((Write-Menu -Menu (Get-AzureRmSubscription -WA SilentlyContinue) -PropertyToShow SubscriptionName -Header 'Welcome to Azure' -Prompt 'Select Subscription' -Shift 1).SubscriptionName)"
 	$SelectResourceGroup = "`$AzResourceGroup = (Write-Menu -Menu (Get-AzureRmResourceGroup -WA SilentlyContinue) -PropertyToShow ResourceGroupName -Header 'Initialize variable [`$AzResourceGroup]' -Prompt 'Select ResourceGroup' -Shift 1).ResourceGroupName"
+	$GetVM = "Get-AzureRmVM -WA SilentlyContinue -ResourceGroupName `$AzResourceGroup |select @{N='VM';E={`$_.Name}},@{N='Size';E={`$_.HardwareProfile.VmSize}},@{N='PowerState';E={`$_ |Get-AzVmPowerState}} |sort PowerState,VM |ft -au"
 	Try
 	{
-		If ((Get-Content $PROFILE -Raw) -notmatch 'Select-AzureRmProfile') {
+		If ((Get-Content $PROFILE -Raw) -notmatch 'Select-AzureRmProfile' -or !(Get-Content $PROFILE -Raw)) {
 			"`n### AZURE AUTO LOGIN ###" |Out-File $PROFILE -Append -Confirm:$false
 			$InitAzProfile               |Out-File $PROFILE -Append -Confirm:$false
 			$SelectSubscription          |Out-File $PROFILE -Append -Confirm:$false
 			$SelectResourceGroup         |Out-File $PROFILE -Append -Confirm:$false
+			$GetVM                       |Out-File $PROFILE -Append -Confirm:$false
 			
 			### Open your PowerShell profile script ###
 			If ($ShowProfile) {Invoke-Item $PROFILE}
 			return $true
-		} Else {return $true}
+		} Else {return $false}
 	}
 	Catch
 	{
@@ -652,4 +660,3 @@ End {}
 
 } #EndFunction New-AzCredProfile
 
-Export-ModuleMember -Alias '*' -Function '*'
