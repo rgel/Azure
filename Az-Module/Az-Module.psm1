@@ -267,7 +267,7 @@ Function Get-AzOrphanedVhd {
 
 	Process {
 
-		### Get registerd in VM VHD in all ResourceGroups ###
+		### Get registered VM VHD in all ResourceGroups ###
 		Foreach ($AzRg in ($ResGroup = Get-AzureRmResourceGroup)) {
 			Foreach ($AzVm in ($VM = Get-AzureRmVM -ResourceGroupName ($AzRg.ResourceGroupName))) {
 				$VmVhd += ($AzVm.StorageProfile.OsDisk.Vhd.Uri) -replace ($rgxUrl,'')
@@ -276,7 +276,7 @@ Function Get-AzOrphanedVhd {
 				}
 			}
 		}
-		### Get VHD located in all StorageAccouns ###
+		### Get VHD located in all StorageAccounts ###
 		Foreach ($Vhd in ($SaVhd = Get-AzureRmStorageAccount |Get-AzureStorageContainer |Get-AzureStorageBlob |? {$_.Name -match '\.vhd$'})) {
 		
 			$ModifiedLocal = $Vhd.LastModified.LocalDateTime
