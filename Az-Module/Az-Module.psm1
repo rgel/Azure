@@ -292,7 +292,7 @@ Function Get-AzOrphanedVhd {
 				SizeGB         = [Math]::Round($Vhd.Length/1GB,0)
 				Modified       = $ModifiedLocal.ToString('dd/MM/yyyy HH:mm')
 				LastWriteDays  = $Days
-				FullPath       = ($Vhd.ICloudBlob.Uri) -replace ($rgxUrl,'')
+				FullPath       = ($Vhd.ICloudBlob.Uri.AbsoluteUri) -replace ($rgxUrl,'')
 				Snapshot       = $Vhd.ICloudBlob.IsSnapshot
 			}
 			$Object = New-Object PSObject -Property $Properties
