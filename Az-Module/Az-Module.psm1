@@ -254,6 +254,7 @@ Function Get-AzOrphanedVhd {
 	Author      :: Roman Gelman
 	Dependency  :: AzureRm and Azure.Storage PowerShell Modules
 	Version 1.0 :: 14-Jul-2016  :: [Release]
+	Version 1.1 :: 03-Apr-2017  :: [Change] :: Added two properties (State, Status) to the returned object [Thanks to Javier González Tejada]
 .LINK
 	http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud
 #>
@@ -294,6 +295,8 @@ Function Get-AzOrphanedVhd {
 				LastWriteDays  = $Days
 				FullPath       = ($Vhd.ICloudBlob.Uri) -replace ($rgxUrl,'')
 				Snapshot       = $Vhd.ICloudBlob.IsSnapshot
+				State          = $Vhd.ICloudBlob.Properties.LeaseState
+				Status         = $Vhd.ICloudBlob.Properties.LeaseStatus
 			}
 			$Object = New-Object PSObject -Property $Properties
 			### Return if not in the list only ###
