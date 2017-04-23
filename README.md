@@ -1,7 +1,7 @@
 # ![azureautomation2](https://cloud.githubusercontent.com/assets/6964549/17082193/9aade278-517d-11e6-8db1-1f04fb786e81.png) Azure Repo
 ## Microsoft Azure POSH scripts and modules
 
-### <ins>[Az-Module</ins>] (https://github.com/rgel/Azure/tree/master/Az-Module)
+### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module)
 
 To install this module, drop the entire '<b>Az-Module</b>' folder into one of your module directories.
 
@@ -29,15 +29,15 @@ To start using the module functions:
 
 |No|Cmdlet|Description|
 |----|----|----|
-|1|<b> [Get-AzVmPowerState</b>] (http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule)|This filter gets AzureRm VM PowerState|
-|2|<b> [Get-AzVmTag</b>] (http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule)|This filter gets AzureRm VM Tag value|
-|3|<b> [Add-AzVmTag</b>] (http://www.ps1code.com/single-post/2016/06/29/Azure-VM-Tag-automation)|This cmdlet adds/sets Resource Tag/Tags for Azure VMs|
-|4|<b> [Get-AzOrphanedVhd</b>] (http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud)|This cmdlet finds `orphaned*` Azure VM disks. Orphaned virtual disks - these are `*.vhd` files that reside on Storage Accounts, but are not related to any VM|
-|5|<b> [Get-AzVmDisk</b>] (http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell)|This function gets Azure VM Virtual Disks|
-|6|<b> [New-AzVmDisk</b>] (http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell)|This function creates and attaches a new data disk to an Azure Virtual Machine|
-|7|<b> [New-AzCredProfile</b>] (http://www.ps1code.com/single-post/2017/01/04/How-to-login-to-the-Azure-automatically)|This function sets your PowerShell session to automatically login to the Azure|
+|1|[<b>Get-AzVmPowerState</b>](http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule)|This filter gets AzureRm VM PowerState|
+|2|[<b>Get-AzVmTag</b>](http://www.ps1code.com/single-post/2016/06/19/Azure-Automation-How-to-stopstart-Azure-VM-on-schedule)|This filter gets AzureRm VM Tag value|
+|3|[<b>Add-AzVmTag</b>](http://www.ps1code.com/single-post/2016/06/29/Azure-VM-Tag-automation)|This cmdlet adds/sets Resource Tag/Tags for Azure VMs|
+|4|[<b>Get-AzOrphanedVhd</b>](http://www.ps1code.com/single-post/2016/07/18/How-to-find-orphaned-VHD-files-in-the-Azure-IaaS-cloud)|This cmdlet finds `orphaned*` Azure VM disks. Orphaned virtual disks - these are `*.vhd` files that reside on Storage Accounts, but are not related to any VM|
+|5|[<b>Get-AzVmDisk</b>](http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell)|This function gets Azure VM Virtual Disks|
+|6|[<b>New-AzVmDisk</b>](http://www.ps1code.com/single-post/2016/08/31/Azure-Automation-How-to-add-a-data-disk-to-an-Azure-VM-with-PowerShell)|This function creates and attaches a new data disk to an Azure Virtual Machine|
+|7|[<b>New-AzCredProfile</b>](http://www.ps1code.com/single-post/2017/01/04/How-to-login-to-the-Azure-automatically)|This function sets your PowerShell session to automatically login to the Azure|
 
-### <ins>[Deploy-AzureVm.ps1</ins>] (https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)
+### [<ins>Deploy-AzureVm.ps1</ins>](https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)
 
 This script deploys multiple Azure VM from JSON templates.
 
@@ -45,16 +45,16 @@ In MSDN subscription it adds public IP and uses DHCP for internal IP address.
 
 For all another subscriptions no Public IP created and static internal IP assigned.
 
-### <ins>[New-SecureCred.ps1</ins>] (https://github.com/rgel/Azure/blob/master/New-SecureCred.ps1)
+### [<ins>New-SecureCred.ps1</ins>](https://github.com/rgel/Azure/blob/master/New-SecureCred.ps1)
 
 This script creates file that contains encrypted password for Azure VM local admin account.
 
 "adminPassword" parameter from JSON template.
 
-### <ins>[Iec_Msdn_Windows.json</ins>] (https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows.json)
+### [<ins>Iec_Msdn_Windows.json</ins>](https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows.json)
 
 JSON template example for standalone Azure Windows VMs in MSDN subscription.
 
-### <ins>[Iec_Msdn_Windows_AS.json</ins>] (https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows_AS.json)
+### [<ins>Iec_Msdn_Windows_AS.json</ins>](https://github.com/rgel/Azure/blob/master/Iec_Msdn_Windows_AS.json)
 
 JSON template example for Availability Set members Azure Windows VMs in MSDN subscription.
