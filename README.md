@@ -1,5 +1,5 @@
-# ![azureautomation2](https://cloud.githubusercontent.com/assets/6964549/17082193/9aade278-517d-11e6-8db1-1f04fb786e81.png) Azure Repo
-## Microsoft Azure POSH scripts and modules
+# ![azureautomation2](https://cloud.githubusercontent.com/assets/6964549/17082193/9aade278-517d-11e6-8db1-1f04fb786e81.png)
+## Microsoft Azure PowerShell scripts and modules
 
 ### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module)
 
