@@ -1,11 +1,10 @@
-#requires -Version 4.0
-#requires -Modules 'AzureRM.Storage','AzureRM.Resources','AzureRM.Compute','AzureRM.Network'
+#requires -Version 4.0 -Modules 'AzureRM.Storage','AzureRM.Resources','AzureRM.Compute','AzureRM.Network'
 
 <#
 .SYNOPSIS
 	Deploy Azure VM.
 .DESCRIPTION
-	This script automate Azure VM deployment process.
+	This script automates Azure VM deployment process.
 .PARAMETER Environment
 	This parameter affects the choice of Json file and VM name prefix.
 .PARAMETER VMCount
@@ -32,72 +31,80 @@
 .EXAMPLE
 	PS C:\> .\Deploy-AzureVm.ps1 -Environment TEST -Guest WindowsSql12 -Project IFN -Notes SQL -VMCount 2 -HighAvailable
 .NOTES
-	Author       ::	Roman Gelman.
-	Dependencies ::	AzureRm Posh Module.
-	Version 1.0  ::	20-Jun-2016 :: Release.
-	Version 1.1  ::	21-Jul-2016 :: Improvement - Added more supported VM images [-Guest] parameter.
-	Version 1.2  ::	24-Aug-2016 :: Bugfix - StorageAccount type determining changed to generate VMSize list.
+	Author      :: Roman Gelman @rgelman75
+	Dependency  :: AzureRm PowerShell Module
+	Shell       :: Tested on PowerShell 5.1
+	Platform    :: Tested on AzureRm v.3.7.0
+	Version 1.0 :: 20-Jun-2016 :: [Release]
+	Version 1.1 :: 21-Jul-2016 :: [Improvement] Added more supported VM images [-Guest] parameter
+	Version 1.2 :: 24-Aug-2016 :: [Bugfix]      StorageAccount type determining changed to generate VMSize list
+	Version 1.3 :: 22-Sep-2016 :: [New Feature] Added optional parameter [-AzureCred]
+	Version 1.4 :: 27-Jun-2017 :: [Change]      Code optimizations 
 .LINK
-	http://ps1code.com/
+	https://ps1code.com/category/powershell/azure/
 #>
 
 [CmdletBinding()]
-
 Param (
-
-	[Parameter(Mandatory=$false,Position=0)]
-		[ValidateSet("PROD","DEV","TEST","DMZ","LABS","MSDN")]
-		[Alias("Domain","Env")]
+	[Parameter(Mandatory = $false, Position = 0)]
+	[ValidateSet("PROD", "DEV", "TEST", "DMZ", "LABS", "MSDN")]
+	[Alias("Domain")]
 	[string]$Environment = "MSDN"
-	,
-	[Parameter(Mandatory=$false,Position=1)]
-		[ValidateRange(1,10)]
-		[Alias("VMQuantity")]
+	 ,
+	[Parameter(Mandatory = $false, Position = 1)]
+	[ValidateRange(1, 10)]
+	[Alias("VMQuantity")]
 	[uint16]$VMCount = 1
-	,
-	[Parameter(Mandatory=$false,Position=2)]
-		[ValidateSet("Windows","WindowsSql12","WindowsSql14","WindowsSql16","RedHat")]
-		[Alias("VMGuest")]
+	 ,
+	[Parameter(Mandatory = $false, Position = 2)]
+	[ValidateSet("Windows", "WindowsSql12", "WindowsSql14", "WindowsSql16", "RedHat")]
+	[Alias("VMGuest")]
 	[string]$Guest = 'Windows'
-	,
-	[Parameter(Mandatory=$false,Position=3)]
-		[Alias("DisableFilter")]
+	 ,
+	[Parameter(Mandatory = $false)]
+	[Alias("DisableFilter")]
 	[switch]$NoFilter
-	,
+	 ,
 	### JSON :: [parameters('vmTag')] ###
-	[Parameter(Mandatory=$false,Position=4)]
-		[ValidateNotNullorEmpty()]
+	[Parameter(Mandatory = $false, Position = 3)]
+	[ValidateNotNullorEmpty()]
 	[string]$Project = 'Infra'
-	,
+	 ,
 	### JSON :: [parameters('vmNotes')] ###
-	[Parameter(Mandatory=$false,Position=5)]
-		[ValidateNotNullorEmpty()]
-		[Alias("VMNotes")]
+	[Parameter(Mandatory = $false, Position = 4)]
+	[ValidateNotNullorEmpty()]
+	[Alias("VMNotes")]
 	[string]$Notes = '_xxx_'
-	,
-	[Parameter(Mandatory=$false,Position=6)]
-		[ValidateNotNullorEmpty()]
+	 ,
+	[Parameter(Mandatory = $false, Position = 5)]
+	[ValidateNotNullorEmpty()]
 	[string]$VMName
-	,
-	[Parameter(Mandatory=$false,Position=7)]
-		[Alias("HA")]
+	 ,
+	[Parameter(Mandatory=$false)]
+	[Alias("HA")]
 	[switch]$HighAvailable
-	,
-	[Parameter(Mandatory=$false,Position=8)]
+	 ,
+	[Parameter(Mandatory = $false)]
+	[ValidateNotNullorEmpty()]
+	[Alias("Credential")]
+	[System.Management.Automation.PSCredential]$AzureCred
+	 ,
+	[Parameter(Mandatory = $false)]
 	[switch]$WhatIf
 )
 
-Begin {
-
+Begin
+{
 	### Helper functions ###
-	Function Write-Menu {
-
+	Function Write-Menu
+	{
+		
 	<#
 	.SYNOPSIS
 		Display custom menu in the PowerShell console.
 	.DESCRIPTION
-		This cmdlet writes numbered and colored menues in the PS console window
-		and returns the choiced entry.
+		The Write-Menu cmdlet creates numbered and colored menues
+		in the PS console window and returns the choiced entry.
 	.PARAMETER Menu
 		Menu entries.
 	.PARAMETER PropertyToShow
@@ -108,7 +115,7 @@ Begin {
 	.PARAMETER Header
 		Menu title (optional).
 	.PARAMETER Shift
-		Quantity of <TAB> keys to shift the menu right.
+		Quantity of <TAB> keys to shift the menu items right.
 	.PARAMETER TextColor
 		Menu text color.
 	.PARAMETER HeaderColor
@@ -125,112 +132,139 @@ Begin {
 		PS C:\> Write-Menu -Menu (Get-Service) -Header ":: Services list ::`n" -Prompt 'Select any service' -PropertyToShow DisplayName
 		Display local services menu with custom property 'DisplayName'.
 	.EXAMPLE
-	      PS C:\> Write-Menu -Menu (Get-Process |select *) -PropertyToShow ProcessName |fl
-	      Display full info about choicen process.
+		PS C:\> Write-Menu -Menu (Get-Process |select *) -PropertyToShow ProcessName |fl
+		Display full info about choicen process.
 	.INPUTS
-		[string[]] [pscustomobject[]] or any!!! type of array.
+		Any type of data (object(s), string(s), number(s), etc).
 	.OUTPUTS
-		[The same type as input object] Single menu entry.
+		[The same type as input object] Single menu item.
 	.NOTES
-		Author       ::	Roman Gelman.
-		Version 1.0  ::	21-Apr-2016  :: Release.
+		Author      :: Roman Gelman @rgelman75
+		Version 1.0 :: 21-Apr-2016 :: [Release]
+		Version 1.1 :: 03-Nov-2016 :: [Change] Supports a single item as menu entry
+		Version 1.2 :: 22-Jun-2017 :: [Change] Throw an error if property, specified by -PropertyToShow does not exist. Code optimization
 	.LINK
-		http://goo.gl/MgLch1
+		https://ps1code.com/2016/04/21/write-menu-powershell
 	#>
-
+		
 	[CmdletBinding()]
-
+	[Alias("menu")]
 	Param (
-
-		[Parameter(Mandatory,Position=0)]
-			[Alias("MenuEntry","List")]
+		[Parameter(Mandatory, Position = 0)]
+		[Alias("MenuEntry", "List")]
 		$Menu
-		,
-		[Parameter(Mandatory=$false,Position=1)]
+		 ,
+		[Parameter(Mandatory = $false, Position = 1)]
 		[string]$PropertyToShow = 'Name'
-		,
-		[Parameter(Mandatory=$false,Position=2)]
-			[ValidateNotNullorEmpty()]
+		 ,
+		[Parameter(Mandatory = $false, Position = 2)]
+		[ValidateNotNullorEmpty()]
 		[string]$Prompt = 'Pick a choice'
-		,
-		[Parameter(Mandatory=$false,Position=3)]
-			[Alias("MenuHeader")]
+		 ,
+		[Parameter(Mandatory = $false, Position = 3)]
+		[Alias("Title")]
 		[string]$Header = ''
-		,
-		[Parameter(Mandatory=$false,Position=4)]
-			[ValidateRange(0,5)]
-			[Alias("Tab","MenuShift")]
+		 ,
+		[Parameter(Mandatory = $false, Position = 4)]
+		[ValidateRange(0, 5)]
+		[Alias("Tab", "MenuShift")]
 		[int]$Shift = 0
-		,
-		#[Enum]::GetValues([System.ConsoleColor])
-		[Parameter(Mandatory=$false,Position=5)]
-			[ValidateSet("Black","DarkBlue","DarkGreen","DarkCyan","DarkRed","DarkMagenta",
-			"DarkYellow","Gray","DarkGray","Blue","Green","Cyan","Red","Magenta","Yellow","White")]
-			[Alias("Color","MenuColor")]
-		[string]$TextColor = 'White'
-		,
-		[Parameter(Mandatory=$false,Position=6)]
-			[ValidateSet("Black","DarkBlue","DarkGreen","DarkCyan","DarkRed","DarkMagenta",
-			"DarkYellow","Gray","DarkGray","Blue","Green","Cyan","Red","Magenta","Yellow","White")]
-		[string]$HeaderColor = 'Yellow'
-		,
-		[Parameter(Mandatory=$false,Position=7)]
-			[ValidateNotNullorEmpty()]
-			[Alias("Exit","AllowExit")]
+		 ,
+		[Parameter(Mandatory = $false, Position = 5)]
+		[Alias("Color", "MenuColor")]
+		[System.ConsoleColor]$TextColor = 'White'
+		 ,
+		[Parameter(Mandatory = $false, Position = 6)]
+		[System.ConsoleColor]$HeaderColor = 'Yellow'
+		 ,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[Alias("Exit", "AllowExit")]
 		[switch]$AddExit
 	)
-
-	Begin {
-
+	
+	Begin
+	{
 		$ErrorActionPreference = 'Stop'
-		If ($Menu -isnot 'array') {Throw "The menu entries must be array or objects"}
-		If ($AddExit) {$MaxLength=8} Else {$MaxLength=9}
-		If ($Menu.Length -gt $MaxLength) {$AddZero=$true} Else {$AddZero=$false}
-		[hashtable]$htMenu = @{}
+		if ($Menu -isnot [array]) { $Menu = @($Menu) }
+		if ($Menu[0] -isnot [string])
+		{
+			if (!($Menu | Get-Member -MemberType Property, NoteProperty -Name $PropertyToShow)) { Throw "Property [$PropertyToShow] does not exist" }
+		}
+		$MaxLength = if ($AddExit) { 8 }
+		else { 9 }
+		$AddZero = if ($Menu.Length -gt $MaxLength) { $true }
+		else { $false }
+		[hashtable]$htMenu = @{ }
 	}
-
-	Process {
-
+	Process
+	{
 		### Write menu header ###
-		If ($Header -ne '') {Write-Host $Header -ForegroundColor $HeaderColor}
+		if ($Header -ne '') { Write-Host $Header -ForegroundColor $HeaderColor }
 		
 		### Create shift prefix ###
-		If ($Shift -gt 0) {$Prefix = [string]"`t"*$Shift}
+		if ($Shift -gt 0) { $Prefix = [string]"`t" * $Shift }
 		
 		### Build menu hash table ###
-		For ($i=1; $i -le $Menu.Length; $i++) {
-			If ($AddZero) {
-				If ($AddExit) {$lz = ([string]($Menu.Length+1)).Length - ([string]$i).Length}
-				Else          {$lz = ([string]$Menu.Length).Length - ([string]$i).Length}
-				$Key = "0"*$lz + "$i"
-			} Else {$Key = "$i"}
-			$htMenu.Add($Key,$Menu[$i-1])
-			If ($Menu[$i] -isnot 'string' -and ($Menu[$i-1].$PropertyToShow)) {
-				Write-Host "$Prefix[$Key] $($Menu[$i-1].$PropertyToShow)" -ForegroundColor $TextColor
-			} Else {Write-Host "$Prefix[$Key] $($Menu[$i-1])" -ForegroundColor $TextColor}
+		for ($i = 1; $i -le $Menu.Length; $i++)
+		{
+			$Key = if ($AddZero)
+			{
+				$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - ([string]$i).Length }
+				else { ([string]$Menu.Length).Length - ([string]$i).Length }
+				"0" * $lz + "$i"
+			}
+			else
+			{
+				"$i"
+			}
+			
+			$htMenu.Add($Key, $Menu[$i - 1])
+			
+			if ($Menu[$i] -isnot 'string' -and ($Menu[$i - 1].$PropertyToShow))
+			{
+				Write-Host "$Prefix[$Key] $($Menu[$i - 1].$PropertyToShow)" -ForegroundColor $TextColor
+			}
+			else
+			{
+				Write-Host "$Prefix[$Key] $($Menu[$i - 1])" -ForegroundColor $TextColor
+			}
 		}
-		If ($AddExit) {
-			[string]$Key = $Menu.Length+1
-			$htMenu.Add($Key,"Exit")
+		
+		### Add 'Exit' row ###
+		if ($AddExit)
+		{
+			[string]$Key = $Menu.Length + 1
+			$htMenu.Add($Key, "Exit")
 			Write-Host "$Prefix[$Key] Exit" -ForegroundColor $TextColor
 		}
 		
 		### Pick a choice ###
-		Do {
+		Do
+		{
 			$Choice = Read-Host -Prompt $Prompt
-			If ($AddZero) {
-				If ($AddExit) {$lz = ([string]($Menu.Length+1)).Length - $Choice.Length}
-				Else          {$lz = ([string]$Menu.Length).Length - $Choice.Length}
-				If ($lz -gt 0) {$KeyChoice = "0"*$lz + "$Choice"} Else {$KeyChoice = $Choice}
-			} Else {$KeyChoice = $Choice}
-		} Until ($htMenu.ContainsKey($KeyChoice))
+			$KeyChoice = if ($AddZero)
+			{
+				$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - $Choice.Length }
+				else { ([string]$Menu.Length).Length - $Choice.Length }
+				if ($lz -gt 0) { "0" * $lz + "$Choice" }
+				else { $Choice }
+			}
+			else
+			{
+				$Choice
+			}
+		}
+		Until ($htMenu.ContainsKey($KeyChoice))
 	}
-
-	End {return $htMenu.get_Item($KeyChoice)}
-
+	End
+	{
+		return $htMenu.get_Item($KeyChoice)
+	}
+		
 	} #EndFunction Write-Menu
-	Function New-IPRange ($FirstIP, $LastIP) {
-
+	Function New-IPRange ($FirstIP, $LastIP)
+	{
 		Try   {$ip1 = ([ipaddress]$FirstIP).GetAddressBytes()}
 		Catch {Throw "'$FirstIP' is not valid IPv4 address"}
 		[array]::Reverse($ip1)
@@ -257,12 +291,12 @@ Begin {
 	
 	If ($Environment -eq "MSDN") {$rgxEnv = 'visual\sstudio'; $Stages = 7} Else {$rgxEnv = $Environment; $Stages = 8}
 	If ($HighAvailable) {$Stages = $Stages+1}
-
-	If ($PSBoundParameters.ContainsKey('VMName') -and $VMName -match $rgxHostName) {
-		Throw "-VMName parameter contains not allowed characters"
-	}
+	
+	If ($PSBoundParameters.ContainsKey('VMName') -and $VMName -match $rgxHostName)
+	{ Throw "-VMName parameter contains not allowed characters" }
 	
 	### JSON :: [parameters('adminPassword')] ###
+	### if (Test-Path .\Deploy-AzureVm.ps1 -PathType Leaf) {.\New-SecureCred.ps1 -Password '******' -SecureFile .\secure.cred} else {Write-Host "cd to the dir, containing [Deploy-AzureVm.ps1] script !!!" -ForegroundColor Red}
 	$SecureFile = "$PSScriptRoot\secure.cred"
 	If (Test-Path $SecureFile -PathType Leaf) {$AdminPwd = Get-Content $SecureFile |ConvertTo-SecureString} Else {Throw "No secure file"}
 	
@@ -281,7 +315,7 @@ Begin {
 	}
 	Catch
 	{
-		Login-AzureRmAccount
+		If ($AzureCred) {Login-AzureRmAccount -Credential $AzureCred} Else {Login-AzureRmAccount}
 		If ($NoFilter) {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled'}).SubscriptionName |sort)}
 		Else           {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled' -and $_.SubscriptionName -match $rgxEnv}).SubscriptionName |sort)}
 	}
@@ -329,7 +363,7 @@ Begin {
 	
 	If     ($setSubnt.Length -eq 0) {Throw "VirtualNetwork '$VirtualNetwork' doesn't have any Subnets"}
 	ElseIf ($setSubnt.Length -eq 1) {$Subnet = $setSubnt[0]; Write-Host "[Stage $Stage..$Stages] The sole Subnet '$($Subnet.Name)' was choicen by default" -ForegroundColor Yellow}
-	Else   {$Subnet = Write-Menu -Menu $setSubnt -Shift 1 -Prompt "Choice Subnet" -Header "[Stage $Stage..$Stages] Available Subnets:" -PropertyToShow Name}
+	Else   {$Subnet = Write-Menu -Menu $setSubnt -Shift 1 -Prompt "Choice Subnet" -Header "[Stage $Stage..$Stages] Available Subnets:"}
 	
 	### JSON :: [parameters('vmnicStaticIP')] ###
 	If ($Environment -ne 'MSDN') {
@@ -400,7 +434,6 @@ Begin {
 		$ExistVM = Get-AzureRmVM -ResourceGroupName $ResourceGroup |select Name |? {$_.Name -match "^$rgxVMPrefix\d{4}$"} |sort Name
 	}
 	
-	
 	If ($ExistVM) {Foreach ($one in $ExistVM) {$VMIndex += $one.Name.TrimStart($rgxVMPrefix)}}
 	Else {
 		### Create very first VM index due to the naming convention ###
@@ -429,9 +462,9 @@ Begin {
 		If ($FreeIndexCount -lt $VMCount) {For ($j=1; $j -le ($VMCount-$FreeIndexCount); $j++) {$FreeIndex += [string]([int]$VMIndex[-1] + $j)}} Else {$FreeIndex = $FreeIndex[0..($VMCount-1)]}
 		Foreach ($index in $FreeIndex) {$VM += "$rgxVMPrefix$index"}
 	}
-} #End Begin
-
-Process {
+}
+Process
+{
 
 	For ($d=0; $d -le $VM.Length-1; $d++) {
 	
@@ -440,7 +473,10 @@ Process {
 			#"[$($d+1)] $($VM[$d]) $($IPRange[$d])"
 		}
 		Else {
-			Write-Progress -Activity "Deploying [$VMSku] $Guest Azure VM ..." -Status "[$VMSize] VM $($d+1) from $($VM.Length)" -CurrentOperation "VM [$($VM[$d])]" -PercentComplete ($d/$VM.Length*100)
+			Write-Progress -Activity "Deploying [$VMSku] $Guest Azure VM ..." `
+						   -Status "[$VMSize] VM $($d + 1) from $($VM.Length)" `
+						   -CurrentOperation "VM [$($VM[$d])]" `
+						   -PercentComplete ($d/$VM.Length*100)
 			
 			### NON-MSDN deployment :: static IP ###			
 			If ($Environment -ne 'MSDN') {
@@ -489,13 +525,12 @@ Process {
 			
 			If ($DeployJob.ProvisioningState -eq 'Succeeded') {
 				$DeployVM = ($DeployJob |select -ExpandProperty Parameters).vmName.Value
-				Write-Host "Successfully deployed VM '$DeployVM'" -ForegroundColor Yellow
+				Write-Host "Successfully deployed VM [$DeployVM]" -ForegroundColor Yellow
 			}
 			Else {
-				Write-Host "Failed to deploy VM '$($VM[$d])'" -ForegroundColor Red
+				Write-Host "Failed to deploy VM [$($VM[$d])]" -ForegroundColor Red
 			}
 		}
 	} #End For
-} #End Process
-
-End {}
+}
+End { }
