@@ -1,4 +1,4 @@
-# ![azureautomation2](https://cloud.githubusercontent.com/assets/6964549/17082193/9aade278-517d-11e6-8db1-1f04fb786e81.png)Microsoft Azure PowerShell Scripts and Modules
+# ![azureautomation2](https://cloud.githubusercontent.com/assets/6964549/17082193/9aade278-517d-11e6-8db1-1f04fb786e81.png)Microsoft Azure PowerShell Repo
 
 ### SCRIPTS
 
@@ -48,4 +48,4 @@ To start using the module functions:
 |9|<b>New-AzVmDisk</b>|Add a new `Data Disk` to an Azure VM|
 
 ##
-I'll write an article about <b>every</b> function on my [blog](https://ps1code.com/) in the [Azure](https://ps1code.com/category/powershell/azure/) category. Stay tuned for updates!
+I'll write an article about <b>every</b> function on my [blog](https://ps1code.com/) in the [Azure](https://ps1code.com/category/powershell/azure/) category. Stay tuned for the updates!
