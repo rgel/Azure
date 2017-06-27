@@ -43,7 +43,7 @@ To start using the module functions:
 |4|<b>Get-AzOrphanedVhd</b>|Get Azure orphaned `*.VHD` files|
 |5|<b>Get-AzSubnet</b>|Get Azure VNET Subnets|
 |6|<b>Get-AzVmPowerState</b>|Get Azure VM Power State|
-|7|<b>Get-AzVmTag/Add-AzVmTag</b>|Get/Add/Set Azure VM Resource Tag(s)|
+|7|<b>Get-AzVmTag / Add-AzVmTag</b>|Get/Add/Set Azure VM Resource Tag(s)|
 |8|<b>Get-AzVmDisk</b>|Get Azure VM Virtual Disks (`OS Disk`, `Data Disk`, `All`)|
 |9|<b>New-AzVmDisk</b>|Add a new `Data Disk` to an Azure VM|
 
