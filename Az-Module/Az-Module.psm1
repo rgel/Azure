@@ -9,13 +9,13 @@ Function Get-AzVmPowerState
 .PARAMETER VM
 	Azure VM object(s), returned by Get-AzureRmVm cmdlet.
 .EXAMPLE
-	PS C:\> Get-AzureRmVM |Get-AzVmPowerState |ft -au
+	PS C:\> Get-AzureRmVM | Get-AzVmPowerState
 .EXAMPLE
 	PS C:\> Get-AzureRmVm -wa SilentlyContinue | Get-AzVmPowerState -State Running
 .EXAMPLE
 	PS C:\> Get-AzureRmVm -wa SilentlyContinue -ResourceGroupName (Select-AzResourceGroup) | Get-AzVmPowerState NotRunning
 .EXAMPLE
-	PS C:\> Select-AzResourceGroup |Select-AzObject VM |Get-AzVmPowerState
+	PS C:\> Select-AzResourceGroup | Select-AzObject VM | Get-AzVmPowerState
 .NOTES
 	Author      :: Roman Gelman @rgelman75
 	Dependency  :: AzureRm PowerShell Module
@@ -92,6 +92,8 @@ Function Get-AzVmTag
 	Azure VM object(s), returned by Get-AzureRmVm cmdlet.
 .PARAMETER Tag
 	Specifies Tag name(s). Tag names are case sensitive!
+.EXAMPLE
+	PS C:\> Get-AzureRmVm -wa SilentlyContinue -ResourceGroupName (Select-AzResourceGroup) | Get-AzVmTag -Tags 'PowerOn', 'PowerOff'
 .EXAMPLE
 	PS C:\> Get-AzureRmVm -wa SilentlyContinue | Get-AzVmTag -Tag 'Project', 'Notes'
 .EXAMPLE
@@ -717,10 +719,11 @@ Function New-AzCredProfile
 	Platform    :: Tested on AzureRm v.3.7.0
 	Version 1.0 :: 04-Jan-2017 :: [Release]
 	Version 1.1 :: 10-Jan-2017 :: [Multiple Changes]
-	[Bugfix]  :: Empty `$PROFILE` file was not processed
-	[Change]  :: Suppressed confirmation on existing Azure profile
-	[Feature] :: Added command to populate VM list in the selected Resource Group
+	   [Bugfix] :: Empty `$PROFILE` file was not processed
+	   [Change] :: Suppressed confirmation on existing Azure profile
+	  [Feature] :: Added command to populate VM list in the selected Resource Group
 	Version 1.2 :: 26-Jun-2017 :: [Change]
+	Version 1.3 :: 28-Jun-2017 :: [Bugfix] :: 'PowerSate' representation because Get-AzVmPowerState function change
 .LINK
 	https://ps1code.com/category/powershell/azure/
 #>
@@ -764,7 +767,7 @@ Function New-AzCredProfile
 		$InitAzProfile = "Select-AzureRmProfile -Path $AzureProfilePath"
 		$SelectSubscription = "Select-AzureRmSubscription -SubscriptionName ((Write-Menu -Menu (Get-AzureRmSubscription -WA SilentlyContinue) -PropertyToShow SubscriptionName -Header 'Welcome to Azure' -Prompt 'Select Subscription' -Shift 1).SubscriptionName)"
 		$SelectResourceGroup = "`$AzResourceGroup = (Write-Menu -Menu (Get-AzureRmResourceGroup -WA SilentlyContinue) -PropertyToShow ResourceGroupName -Header 'Initialize variable [`$AzResourceGroup]' -Prompt 'Select ResourceGroup' -Shift 1).ResourceGroupName"
-		$GetVM = "Get-AzureRmVM -WA SilentlyContinue -ResourceGroupName `$AzResourceGroup |select @{N='VM';E={`$_.Name}},@{N='Size';E={`$_.HardwareProfile.VmSize}},@{N='PowerState';E={`$_ |Get-AzVmPowerState}} |sort PowerState,VM |ft -au"
+		$GetVM = "Get-AzureRmVM -WA SilentlyContinue -ResourceGroupName `$AzResourceGroup |select @{N='VM';E={`$_.Name}},@{N='Size';E={`$_.HardwareProfile.VmSize}},@{N='PowerState';E={(`$_ |Get-AzVmPowerState).PowerState}} |sort PowerState,VM |ft -au"
 		
 		if ((Get-Content $PROFILE -Raw) -notmatch 'Select-AzureRmProfile' -or !(Get-Content $PROFILE -Raw))
 		{
