@@ -25,7 +25,7 @@ Function Get-AzVmPowerState
 	Version 1.1 :: 10-Jan-2017 :: [Change]  :: Warnings suppressed
 	Version 2.0 :: 27-Jun-2017 :: [Release] :: Rewritten from Filter to Function
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/category/powershell/azure/az-module/
 #>
 	
 	[CmdletBinding()]
@@ -106,7 +106,7 @@ Function Get-AzVmTag
 	Version 1.0 :: 20-Jun-2016 :: [Release] :: Filter
 	Version 2.0 :: 27-Jun-2017 :: [Release] :: Rewritten from Filter to Function
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/2017/06/29/azure-vm-tags
 #>
 	
 	[CmdletBinding()]
@@ -194,9 +194,10 @@ Function Add-AzVmTag
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0
 	Version 1.0 :: 27-Jun-2016 :: [Release]
-	Version 1.1 :: 27-Jun-2017 :: [Change] Code optimization, aliases added, new examples
+	Version 1.1 :: 27-Jun-2017 :: [Change] :: Code optimization, aliases added, new examples
+	Version 1.2 :: 28-Jun-2017 :: [Bugfix] :: Tag/Value Parameters edited
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/2017/06/29/azure-vm-tags
 #>
 	
 	[CmdletBinding(DefaultParameterSetName = 'POWER', ConfirmImpact = 'High', SupportsShouldProcess)]
@@ -215,12 +216,12 @@ Function Add-AzVmTag
 		[Alias("PowerOff")]
 		[datetime]$TagPowerOff = '22:22:22'
 		 ,
-		[Parameter(Mandatory, Position = 1, ParameterSetName = 'CUSTOM')]
+		[Parameter(Mandatory, ParameterSetName = 'CUSTOM')]
 		[Alias("TagName")]
-		[ValidateSet("PowerOn", "PowerOff", "Environment", "Project", "Notes")]
+		[ValidateSet("PowerOn", "PowerOff", "Environment", "Project", "Notes", IgnoreCase = $false)]
 		[string]$Tag
 		 ,
-		[Parameter(Mandatory = $false, Position = 2, ParameterSetName = 'CUSTOM')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'CUSTOM')]
 		[Alias("TagValue")]
 		[string]$Value
 		 ,
@@ -357,7 +358,7 @@ Function Get-AzOrphanedVhd
 	Version 1.0 :: 14-Jul-2016 :: [Release]
 	Version 1.1 :: 03-Apr-2017 :: [Change]  :: Added two properties (State, Status) to the returned object [Thanks to Javier González Tejada]
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/category/powershell/azure/az-module/
 #>
 	
 	[CmdletBinding()]
@@ -446,9 +447,9 @@ Function Get-AzVmDisk
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0 | AzureRM.Compute v.2.8.0
 	Version 1.0 :: 31-Aug-2016 :: [Release]
-	Version 1.1 :: 26-Jun-2017 :: [Change] Code optimization
+	Version 1.1 :: 26-Jun-2017 :: [Change] :: Code optimization
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/category/powershell/azure/az-module/
 #>
 
 	[CmdletBinding()]
@@ -554,9 +555,9 @@ Function New-AzVmDisk
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0 | AzureRM.Compute v.2.8.0 | AzureRM.Storage v.2.7.0
 	Version 1.0 :: 31-Aug-2016 :: [Release]
-	Version 1.1 :: 26-Jun-2017 :: [Change] Code optimization
+	Version 1.1 :: 26-Jun-2017 :: [Change] :: Code optimization
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/category/powershell/azure/az-module/
 #>
 	
 	[CmdletBinding()]
@@ -725,7 +726,7 @@ Function New-AzCredProfile
 	Version 1.2 :: 26-Jun-2017 :: [Change]
 	Version 1.3 :: 28-Jun-2017 :: [Bugfix] :: 'PowerSate' representation because Get-AzVmPowerState function change
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/category/powershell/azure/az-module/
 #>
 
 	[CmdletBinding()]
@@ -811,9 +812,6 @@ Function Select-AzResourceGroup
 	This function allows interactively (from Menu list) to select
 	Azure ResourceGroup Name.
 .EXAMPLE
-	PS C:\> Get-AzureRmVM -ResourceGroupName $AzResourceGroup -VMName 'azvm1' |New-AzVmDisk |Format-Table -AutoSize
-	Add a new data disk with all default options.
-.EXAMPLE
 	PS C:\> Select-AzResourceGroup
 .NOTES
 	Author      :: Roman Gelman @rgelman75
@@ -822,7 +820,7 @@ Function Select-AzResourceGroup
 	Platform    :: Tested on AzureRm v.3.7.0
 	Version 1.0 :: 26-Jun-2017 :: [Release]
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/2017/06/29/azure-vm-tags
 #>
 	
 	[CmdletBinding()]
@@ -886,7 +884,7 @@ Function Select-AzObject
 	Platform    :: Tested on AzureRm v.3.7.0
 	Version 1.0 :: 26-Jun-2017 :: [Release]
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/2017/06/29/azure-vm-tags
 #>
 	
 	[CmdletBinding()]
@@ -997,7 +995,7 @@ Function Get-AzSubnet
 	Platform    :: Tested on AzureRm v.3.7.0 | AzureRM.Network v.3.6.0
 	Version 1.0 :: 26-Jun-2017 :: [Release]
 .LINK
-	https://ps1code.com/category/powershell/azure/
+	https://ps1code.com/category/powershell/azure/az-module/
 #>
 	
 	[CmdletBinding()]
