@@ -358,7 +358,7 @@ Function Get-AzOrphanedVhd
 	Version 1.0 :: 14-Jul-2016 :: [Release]
 	Version 1.1 :: 03-Apr-2017 :: [Change]  :: Added two properties (State, Status) to the returned object [Thanks to Javier González Tejada]
 .LINK
-	https://ps1code.com/category/powershell/azure/az-module/
+	https://ps1code.com/2017/07/05/azure-orphaned-vhd
 #>
 	
 	[CmdletBinding()]
@@ -449,7 +449,7 @@ Function Get-AzVmDisk
 	Version 1.0 :: 31-Aug-2016 :: [Release]
 	Version 1.1 :: 26-Jun-2017 :: [Change] :: Code optimization
 .LINK
-	https://ps1code.com/category/powershell/azure/az-module/
+	https://ps1code.com/2017/07/05/azure-vm-add-data-disk
 #>
 
 	[CmdletBinding()]
@@ -557,7 +557,7 @@ Function New-AzVmDisk
 	Version 1.0 :: 31-Aug-2016 :: [Release]
 	Version 1.1 :: 26-Jun-2017 :: [Change] :: Code optimization
 .LINK
-	https://ps1code.com/category/powershell/azure/az-module/
+	https://ps1code.com/2017/07/05/azure-vm-add-data-disk
 #>
 	
 	[CmdletBinding()]
@@ -588,11 +588,11 @@ Function New-AzVmDisk
 		$WarningPreference = 'SilentlyContinue'
 		$DataDiskSuffix = '_datadisk'
 		$rgxDataDiskIndex = $DataDiskSuffix + '(\d+)\.vhd$'
-		switch -regex ($Caching)
+		$Cache = switch -regex ($Caching)
 		{
-			'^sql(t|d)' { $Cache = 'ReadOnly'; Break }
-			'^sqll'     { $Cache = 'None'; Break }
-			Default { $Cache = $Caching }
+			'^sql(t|d)' { 'ReadOnly'; Break }
+			'^sqll'     { 'None'; Break }
+			Default { $Caching }
 		}
 	}
 	Process
@@ -675,7 +675,6 @@ Function New-AzVmDisk
 						   -CurrentOperation "StorageAccount [$StorageAccountName] | DiskName [$DataDiskName] | LUN [$DataDiskLun] | Size [$SizeGB GiB] | Caching [$Cache]"
 			$null = Add-AzureRmVMDataDisk -VM $VM -Name $DataDiskName -Lun $DataDiskLun -CreateOption empty -DiskSizeInGB $SizeGB -VhdUri $DataDiskUri -Caching $Cache
 			$null = Update-AzureRmVM -VM $VM -ResourceGroupName $ResourceGroup
-			Write-Progress -Activity "Completed" -Completed
 			Get-AzureRmVm -ResourceGroupName $ResourceGroup -VMName $VM.Name | Get-AzVmDisk | select * -exclude Path
 		}
 		Catch
@@ -685,7 +684,7 @@ Function New-AzVmDisk
 	}
 	End
 	{
-		
+		Write-Progress -Activity "Completed" -Completed
 	}
 	
 } #EndFunction New-AzVmDisk
@@ -726,7 +725,7 @@ Function New-AzCredProfile
 	Version 1.2 :: 26-Jun-2017 :: [Change]
 	Version 1.3 :: 28-Jun-2017 :: [Bugfix] :: 'PowerSate' representation because Get-AzVmPowerState function change
 .LINK
-	https://ps1code.com/category/powershell/azure/az-module/
+	https://ps1code.com/2017/07/05/login-to-azure-automatically
 #>
 
 	[CmdletBinding()]
