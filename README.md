@@ -44,8 +44,8 @@ To start using the module functions:
 |5|<b>Get-AzSubnet</b>|Get Azure VNET Subnets|
 |6|<b>Get-AzVmPowerState</b>|Get Azure VM(s) Power State|
 |7|[<b>Get-AzVmTag / Add-AzVmTag</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Get/Add/Set Azure VM Resource Tag(s)|
-|8|<b>Get-AzVmDisk</b>|Get Azure VM Virtual Disks (`OS Disk`, `Data Disk`, `All`)|
-|9|<b>New-AzVmDisk</b>|Add a new `Data Disk` to an Azure VM|
+|8|[<b>Get-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Get Azure VM Virtual Disks (`OS Disk`, `Data Disk`, `All`)|
+|9|[<b>New-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Add a new `Data Disk` to an Azure VM|
 
 ##
 I'll write an article about <b>every</b> module function on my [blog](https://ps1code.com/) in the [Az-Module Home](https://ps1code.com/category/powershell/azure/az-module) category. Stay tuned for the updates!
