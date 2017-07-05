@@ -48,4 +48,4 @@ To start using the module functions:
 |9|[<b>New-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Add a new `Data Disk` to an Azure VM|
 
 ##
-I'll write an article about <b>every</b> module function on my [blog](https://ps1code.com/) in the [Az-Module Home](https://ps1code.com/category/powershell/azure/az-module) category. Stay tuned for the updates!
+Stay tuned for the updates!
