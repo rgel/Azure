@@ -42,9 +42,10 @@ Function Write-Menu
 	[The same type as input object] Single menu item.
 .NOTES
 	Author      :: Roman Gelman @rgelman75
-	Version 1.0 :: 21-Apr-2016 :: [Release]
-	Version 1.1 :: 03-Nov-2016 :: [Change] Supports a single item as menu entry
-	Version 1.2 :: 22-Jun-2017 :: [Change] Throw an error if property, specified by -PropertyToShow does not exist. Code optimization
+	Version 1.0 :: 21-Apr-2016 :: [Release] :: Publicly available
+	Version 1.1 :: 03-Nov-2016 :: [Change] :: Supports a single item as menu entry
+	Version 1.2 :: 22-Jun-2017 :: [Change] :: Throws an error if property, specified by -PropertyToShow does not exist. Code optimization
+	Version 1.3 :: 27-Sep-2017 :: [Bugfix] :: Fixed throwing an error while menu entries are numeric values
 .LINK
 	https://ps1code.com/2016/04/21/write-menu-powershell
 #>
@@ -89,15 +90,13 @@ Function Write-Menu
 	{
 		$ErrorActionPreference = 'Stop'
 		if ($Menu -isnot [array]) { $Menu = @($Menu) }
-		if ($Menu[0] -isnot [string])
+		if ($Menu[0] -is [psobject] -and $Menu[0] -isnot [string])
 		{
 			if (!($Menu | Get-Member -MemberType Property, NoteProperty -Name $PropertyToShow)) { Throw "Property [$PropertyToShow] does not exist" }
 		}
-		$MaxLength = if ($AddExit) { 8 }
-		else { 9 }
-		$AddZero = if ($Menu.Length -gt $MaxLength) { $true }
-		else { $false }
-		[hashtable]$htMenu = @{ }
+		$MaxLength = if ($AddExit) { 8 } else { 9 }
+		$AddZero = if ($Menu.Length -gt $MaxLength) { $true } else { $false }
+		[hashtable]$htMenu = @{}
 	}
 	Process
 	{
@@ -112,20 +111,19 @@ Function Write-Menu
 		{
 			$Key = if ($AddZero)
 			{
-				$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - ([string]$i).Length }
-				else { ([string]$Menu.Length).Length - ([string]$i).Length }
-				"0" * $lz + "$i"
+				$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - ([string]$i).Length } else { ([string]$Menu.Length).Length - ([string]$i).Length }
+				"0"*$lz + "$i"
 			}
 			else
 			{
 				"$i"
 			}
 			
-			$htMenu.Add($Key, $Menu[$i - 1])
+			$htMenu.Add($Key, $Menu[$i-1])
 			
 			if ($Menu[$i] -isnot 'string' -and ($Menu[$i - 1].$PropertyToShow))
 			{
-				Write-Host "$Prefix[$Key] $($Menu[$i - 1].$PropertyToShow)" -ForegroundColor $TextColor
+				Write-Host "$Prefix[$Key] $($Menu[$i-1].$PropertyToShow)" -ForegroundColor $TextColor
 			}
 			else
 			{
@@ -136,21 +134,18 @@ Function Write-Menu
 		### Add 'Exit' row ###
 		if ($AddExit)
 		{
-			[string]$Key = $Menu.Length + 1
+			[string]$Key = $Menu.Length+1
 			$htMenu.Add($Key, "Exit")
 			Write-Host "$Prefix[$Key] Exit" -ForegroundColor $TextColor
 		}
 		
 		### Pick a choice ###
-		Do
-		{
+		Do {
 			$Choice = Read-Host -Prompt $Prompt
 			$KeyChoice = if ($AddZero)
 			{
-				$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - $Choice.Length }
-				else { ([string]$Menu.Length).Length - $Choice.Length }
-				if ($lz -gt 0) { "0" * $lz + "$Choice" }
-				else { $Choice }
+				$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - $Choice.Length } else { ([string]$Menu.Length).Length - $Choice.Length }
+				if ($lz -gt 0) { "0" * $lz + "$Choice" } else { $Choice }
 			}
 			else
 			{
@@ -163,5 +158,5 @@ Function Write-Menu
 	{
 		return $htMenu.get_Item($KeyChoice)
 	}
-	
+
 } #EndFunction Write-Menu
