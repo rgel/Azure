@@ -35,11 +35,12 @@
 	Dependency  :: AzureRm PowerShell Module
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0
-	Version 1.0 :: 20-Jun-2016 :: [Release]
-	Version 1.1 :: 21-Jul-2016 :: [Improvement] Added more supported VM images [-Guest] parameter
-	Version 1.2 :: 24-Aug-2016 :: [Bugfix]      StorageAccount type determining changed to generate VMSize list
-	Version 1.3 :: 22-Sep-2016 :: [New Feature] Added optional parameter [-AzureCred]
-	Version 1.4 :: 27-Jun-2017 :: [Change]      Code optimizations 
+	Version 1.0 :: 20-Jun-2016 :: [Release] :: Publicly available
+	Version 1.1 :: 21-Jul-2016 :: [Improvement] :: Added more supported VM images [-Guest] parameter
+	Version 1.2 :: 24-Aug-2016 :: [Bugfix] :: StorageAccount type determining changed to generate VMSize list
+	Version 1.3 :: 22-Sep-2016 :: [New Feature] :: Added optional parameter [-AzureCred]
+	Version 1.4 :: 27-Jun-2017 :: [Change] :: Code optimizations
+	Version 1.5 :: 19-Oct-2017 :: [Change] :: The Get-AzureRmSubscription cmdlet's property [SubscriptionName] changed to [Name]
 .LINK
 	https://ps1code.com/category/powershell/azure/
 #>
@@ -98,7 +99,7 @@ Begin
 	### Helper functions ###
 	Function Write-Menu
 	{
-		
+			
 	<#
 	.SYNOPSIS
 		Display custom menu in the PowerShell console.
@@ -133,136 +134,138 @@ Begin
 		Display local services menu with custom property 'DisplayName'.
 	.EXAMPLE
 		PS C:\> Write-Menu -Menu (Get-Process |select *) -PropertyToShow ProcessName |fl
-		Display full info about choicen process.
+		Display full info about selected process.
 	.INPUTS
 		Any type of data (object(s), string(s), number(s), etc).
 	.OUTPUTS
 		[The same type as input object] Single menu item.
 	.NOTES
 		Author      :: Roman Gelman @rgelman75
-		Version 1.0 :: 21-Apr-2016 :: [Release]
-		Version 1.1 :: 03-Nov-2016 :: [Change] Supports a single item as menu entry
-		Version 1.2 :: 22-Jun-2017 :: [Change] Throw an error if property, specified by -PropertyToShow does not exist. Code optimization
+		Version 1.0 :: 21-Apr-2016 :: [Release] :: Publicly available
+		Version 1.1 :: 03-Nov-2016 :: [Change] :: Supports a single item as menu entry
+		Version 1.2 :: 22-Jun-2017 :: [Change] :: Throws an error if property, specified by -PropertyToShow does not exist. Code optimization
+		Version 1.3 :: 27-Sep-2017 :: [Bugfix] :: Fixed throwing an error while menu entries are numeric values
 	.LINK
 		https://ps1code.com/2016/04/21/write-menu-powershell
 	#>
 		
-	[CmdletBinding()]
-	[Alias("menu")]
-	Param (
-		[Parameter(Mandatory, Position = 0)]
-		[Alias("MenuEntry", "List")]
-		$Menu
-		 ,
-		[Parameter(Mandatory = $false, Position = 1)]
-		[string]$PropertyToShow = 'Name'
-		 ,
-		[Parameter(Mandatory = $false, Position = 2)]
-		[ValidateNotNullorEmpty()]
-		[string]$Prompt = 'Pick a choice'
-		 ,
-		[Parameter(Mandatory = $false, Position = 3)]
-		[Alias("Title")]
-		[string]$Header = ''
-		 ,
-		[Parameter(Mandatory = $false, Position = 4)]
-		[ValidateRange(0, 5)]
-		[Alias("Tab", "MenuShift")]
-		[int]$Shift = 0
-		 ,
-		[Parameter(Mandatory = $false, Position = 5)]
-		[Alias("Color", "MenuColor")]
-		[System.ConsoleColor]$TextColor = 'White'
-		 ,
-		[Parameter(Mandatory = $false, Position = 6)]
-		[System.ConsoleColor]$HeaderColor = 'Yellow'
-		 ,
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[Alias("Exit", "AllowExit")]
-		[switch]$AddExit
-	)
-	
-	Begin
-	{
-		$ErrorActionPreference = 'Stop'
-		if ($Menu -isnot [array]) { $Menu = @($Menu) }
-		if ($Menu[0] -isnot [string])
-		{
-			if (!($Menu | Get-Member -MemberType Property, NoteProperty -Name $PropertyToShow)) { Throw "Property [$PropertyToShow] does not exist" }
-		}
-		$MaxLength = if ($AddExit) { 8 }
-		else { 9 }
-		$AddZero = if ($Menu.Length -gt $MaxLength) { $true }
-		else { $false }
-		[hashtable]$htMenu = @{ }
-	}
-	Process
-	{
-		### Write menu header ###
-		if ($Header -ne '') { Write-Host $Header -ForegroundColor $HeaderColor }
+		[CmdletBinding()]
+		[Alias("menu")]
+		Param (
+			[Parameter(Mandatory, Position = 0)]
+			[Alias("MenuEntry", "List")]
+			$Menu
+			 ,
+			[Parameter(Mandatory = $false, Position = 1)]
+			[string]$PropertyToShow = 'Name'
+			 ,
+			[Parameter(Mandatory = $false, Position = 2)]
+			[ValidateNotNullorEmpty()]
+			[string]$Prompt = 'Pick a choice'
+			 ,
+			[Parameter(Mandatory = $false, Position = 3)]
+			[Alias("Title")]
+			[string]$Header = ''
+			 ,
+			[Parameter(Mandatory = $false, Position = 4)]
+			[ValidateRange(0, 5)]
+			[Alias("Tab", "MenuShift")]
+			[int]$Shift = 0
+			 ,
+			[Parameter(Mandatory = $false, Position = 5)]
+			[Alias("Color", "MenuColor")]
+			[System.ConsoleColor]$TextColor = 'White'
+			 ,
+			[Parameter(Mandatory = $false, Position = 6)]
+			[System.ConsoleColor]$HeaderColor = 'Yellow'
+			 ,
+			[Parameter(Mandatory = $false)]
+			[ValidateNotNullorEmpty()]
+			[Alias("Exit", "AllowExit")]
+			[switch]$AddExit
+		)
 		
-		### Create shift prefix ###
-		if ($Shift -gt 0) { $Prefix = [string]"`t" * $Shift }
-		
-		### Build menu hash table ###
-		for ($i = 1; $i -le $Menu.Length; $i++)
+		Begin
 		{
-			$Key = if ($AddZero)
+			$ErrorActionPreference = 'Stop'
+			if ($Menu -isnot [array]) { $Menu = @($Menu) }
+			if ($Menu[0] -is [psobject] -and $Menu[0] -isnot [string])
 			{
-				$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - ([string]$i).Length }
-				else { ([string]$Menu.Length).Length - ([string]$i).Length }
-				"0" * $lz + "$i"
+				if (!($Menu | Get-Member -MemberType Property, NoteProperty -Name $PropertyToShow)) { Throw "Property [$PropertyToShow] does not exist" }
 			}
-			else
+			$MaxLength = if ($AddExit) { 8 }
+			else { 9 }
+			$AddZero = if ($Menu.Length -gt $MaxLength) { $true }
+			else { $false }
+			[hashtable]$htMenu = @{ }
+		}
+		Process
+		{
+			### Write menu header ###
+			if ($Header -ne '') { Write-Host $Header -ForegroundColor $HeaderColor }
+			
+			### Create shift prefix ###
+			if ($Shift -gt 0) { $Prefix = [string]"`t" * $Shift }
+			
+			### Build menu hash table ###
+			for ($i = 1; $i -le $Menu.Length; $i++)
 			{
-				"$i"
+				$Key = if ($AddZero)
+				{
+					$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - ([string]$i).Length }
+					else { ([string]$Menu.Length).Length - ([string]$i).Length }
+					"0" * $lz + "$i"
+				}
+				else
+				{
+					"$i"
+				}
+				
+				$htMenu.Add($Key, $Menu[$i - 1])
+				
+				if ($Menu[$i] -isnot 'string' -and ($Menu[$i - 1].$PropertyToShow))
+				{
+					Write-Host "$Prefix[$Key] $($Menu[$i - 1].$PropertyToShow)" -ForegroundColor $TextColor
+				}
+				else
+				{
+					Write-Host "$Prefix[$Key] $($Menu[$i - 1])" -ForegroundColor $TextColor
+				}
 			}
 			
-			$htMenu.Add($Key, $Menu[$i - 1])
+			### Add 'Exit' row ###
+			if ($AddExit)
+			{
+				[string]$Key = $Menu.Length + 1
+				$htMenu.Add($Key, "Exit")
+				Write-Host "$Prefix[$Key] Exit" -ForegroundColor $TextColor
+			}
 			
-			if ($Menu[$i] -isnot 'string' -and ($Menu[$i - 1].$PropertyToShow))
+			### Pick a choice ###
+			Do
 			{
-				Write-Host "$Prefix[$Key] $($Menu[$i - 1].$PropertyToShow)" -ForegroundColor $TextColor
+				$Choice = Read-Host -Prompt $Prompt
+				$KeyChoice = if ($AddZero)
+				{
+					$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - $Choice.Length }
+					else { ([string]$Menu.Length).Length - $Choice.Length }
+					if ($lz -gt 0) { "0" * $lz + "$Choice" }
+					else { $Choice }
+				}
+				else
+				{
+					$Choice
+				}
 			}
-			else
-			{
-				Write-Host "$Prefix[$Key] $($Menu[$i - 1])" -ForegroundColor $TextColor
-			}
+			Until ($htMenu.ContainsKey($KeyChoice))
 		}
-		
-		### Add 'Exit' row ###
-		if ($AddExit)
+		End
 		{
-			[string]$Key = $Menu.Length + 1
-			$htMenu.Add($Key, "Exit")
-			Write-Host "$Prefix[$Key] Exit" -ForegroundColor $TextColor
+			return $htMenu.get_Item($KeyChoice)
 		}
-		
-		### Pick a choice ###
-		Do
-		{
-			$Choice = Read-Host -Prompt $Prompt
-			$KeyChoice = if ($AddZero)
-			{
-				$lz = if ($AddExit) { ([string]($Menu.Length + 1)).Length - $Choice.Length }
-				else { ([string]$Menu.Length).Length - $Choice.Length }
-				if ($lz -gt 0) { "0" * $lz + "$Choice" }
-				else { $Choice }
-			}
-			else
-			{
-				$Choice
-			}
-		}
-		Until ($htMenu.ContainsKey($KeyChoice))
-	}
-	End
-	{
-		return $htMenu.get_Item($KeyChoice)
-	}
 		
 	} #EndFunction Write-Menu
+	
 	Function New-IPRange ($FirstIP, $LastIP)
 	{
 		Try   {$ip1 = ([ipaddress]$FirstIP).GetAddressBytes()}
@@ -310,22 +313,22 @@ Begin
 	### Select subscription context ###
 	Try
 	{
-		If ($NoFilter) {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled'}).SubscriptionName |sort)}
-		Else           {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled' -and $_.SubscriptionName -match $rgxEnv}).SubscriptionName |sort)}
+		If ($NoFilter) {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled'}).Name |sort)}
+		Else           {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled' -and $_.Name -match $rgxEnv}).Name |sort)}
 	}
 	Catch
 	{
-		If ($AzureCred) {Login-AzureRmAccount -Credential $AzureCred} Else {Login-AzureRmAccount}
-		If ($NoFilter) {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled'}).SubscriptionName |sort)}
-		Else           {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled' -and $_.SubscriptionName -match $rgxEnv}).SubscriptionName |sort)}
+		If ($AzureCred) { Login-AzureRmAccount -Credential $AzureCred } Else { Login-AzureRmAccount }
+		If ($NoFilter) {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled'}).Name |sort)}
+		Else           {$setSubsc = @((Get-AzureRmSubscription |? {$_.State -eq 'enabled' -and $_.Name -match $rgxEnv}).Name |sort)}
 	}
 	Finally
 	{
 		$Stage = 1
 		If     (!$setSubsc)             {Throw "You don't have any enabled subscriptions that match '$Environment' environment"}
 		ElseIf ($setSubsc.Length -eq 0) {Throw "You don't have any enabled subscriptions"}
-		ElseIf ($setSubsc.Length -eq 1) {$Subscription = $setSubsc[0]; Write-Host "[Stage $Stage..$Stages] The sole Subscription '$Subscription' was choicen by default" -ForegroundColor Yellow}
-		Else   {$Subscription = Write-Menu -Menu $setSubsc -Shift 1 -Prompt "Choice Subscription" -Header "[Stage $Stage..$Stages] Available Subscriptions:"}
+		ElseIf ($setSubsc.Length -eq 1) {$Subscription = $setSubsc[0]; Write-Host "[Stage $Stage..$Stages] The sole Subscription '$Subscription' have selected by default" -ForegroundColor Yellow}
+		Else   {$Subscription = Write-Menu -Menu $setSubsc -Shift 1 -Prompt "Select Subscription" -Header "[Stage $Stage..$Stages] Available Subscriptions:"}
 		Set-AzureRmContext -SubscriptionName $Subscription |Out-Null
 	}
 	
@@ -334,8 +337,8 @@ Begin
 	$setResGr = @((Get-AzureRmResourceGroup).ResourceGroupName |sort)
 	
 	If     ($setResGr.Length -eq 0) {Throw "Subscription '$Subscription' doesn't have any ResourceGroups"}
-	ElseIf ($setResGr.Length -eq 1) {$ResourceGroup = $setResGr[0]; Write-Host "[Stage $Stage..$Stages] The sole ResourceGroup '$ResourceGroup' was choicen by default" -ForegroundColor Yellow}
-	Else   {$ResourceGroup = Write-Menu -Menu $setResGr -Shift 1 -Prompt "Choice ResourceGroup" -Header "[Stage $Stage..$Stages] Available ResourceGroups:"}
+	ElseIf ($setResGr.Length -eq 1) {$ResourceGroup = $setResGr[0]; Write-Host "[Stage $Stage..$Stages] The sole ResourceGroup '$ResourceGroup' have selected by default" -ForegroundColor Yellow}
+	Else   {$ResourceGroup = Write-Menu -Menu $setResGr -Shift 1 -Prompt "Select ResourceGroup" -Header "[Stage $Stage..$Stages] Available ResourceGroups:"}
 	
 	### JSON :: [parameters('storageAccountName')] ###
 	$Stage++
@@ -343,10 +346,10 @@ Begin
 	$setStorA = Get-AzureRmStorageAccount -ResourceGroupName $ResourceGroup |? {$_.StorageAccountName -notmatch $rgxDiagStor} |sort StorageAccountName
 	
 	If     (!$setStorA)             {Throw "ResourceGroup '$ResourceGroup' doesn't have any StorageAccounts except diagnostic"}
-	ElseIf ($setStorA.Length -eq 1) {$StorageAccount = $setStorA[0]; Write-Host "[Stage $Stage..$Stages] The sole StorageAccount '$($StorageAccount.StorageAccountName)' was choicen by default" -ForegroundColor Yellow}
-	Else   {$StorageAccount = Write-Menu -Menu $setStorA -Shift 1 -Prompt "Choice StorageAccount" -Header "[Stage $Stage..$Stages] Available StorageAccounts:" -PropertyToShow StorageAccountName}
+	ElseIf ($setStorA.Length -eq 1) {$StorageAccount = $setStorA[0]; Write-Host "[Stage $Stage..$Stages] The sole StorageAccount '$($StorageAccount.StorageAccountName)' have selected by default" -ForegroundColor Yellow}
+	Else   {$StorageAccount = Write-Menu -Menu $setStorA -Shift 1 -Prompt "Select StorageAccount" -Header "[Stage $Stage..$Stages] Available StorageAccounts:" -PropertyToShow StorageAccountName}
 	
-	### Choice ResourceGroup that contains Network objects (customer specific) ###
+	### Select ResourceGroup that contains Network objects (customer specific) ###
 	If ($Environment -eq 'MSDN') {$VnetResourceGroup = $ResourceGroup} Else {$VnetResourceGroup = "$Environment" + "_infra-rg"}
 	
 	### JSON :: [parameters('virtualNetworkName')] ###
@@ -354,16 +357,16 @@ Begin
 	$setVirNw = @((Get-AzureRmVirtualNetwork -ResourceGroupName $VnetResourceGroup).Name |sort)
 	
 	If     ($setVirNw.Length -eq 0) {Throw "ResourceGroup '$VnetResourceGroup' doesn't have any VirtualNetworks"}
-	ElseIf ($setVirNw.Length -eq 1) {$VirtualNetwork = $setVirNw[0]; Write-Host "[Stage $Stage..$Stages] The sole VirtualNetwork '$VirtualNetwork' was choicen by default" -ForegroundColor Yellow}
-	Else   {$VirtualNetwork = Write-Menu -Menu $setVirNw -Shift 1 -Prompt "Choice VirtualNetwork" -Header "[Stage $Stage..$Stages] Available VirtualNetworks:"}
+	ElseIf ($setVirNw.Length -eq 1) {$VirtualNetwork = $setVirNw[0]; Write-Host "[Stage $Stage..$Stages] The sole VirtualNetwork '$VirtualNetwork' have selected by default" -ForegroundColor Yellow}
+	Else   {$VirtualNetwork = Write-Menu -Menu $setVirNw -Shift 1 -Prompt "Select VirtualNetwork" -Header "[Stage $Stage..$Stages] Available VirtualNetworks:"}
 	
 	### JSON :: [parameters('subnetName')] ###
 	$Stage++
 	$setSubnt = Get-AzureRmVirtualNetwork -Name $VirtualNetwork -ResourceGroupName $VnetResourceGroup |select -expand Subnets |select Name,AddressPrefix |sort Name
 	
-	If     ($setSubnt.Length -eq 0) {Throw "VirtualNetwork '$VirtualNetwork' doesn't have any Subnets"}
-	ElseIf ($setSubnt.Length -eq 1) {$Subnet = $setSubnt[0]; Write-Host "[Stage $Stage..$Stages] The sole Subnet '$($Subnet.Name)' was choicen by default" -ForegroundColor Yellow}
-	Else   {$Subnet = Write-Menu -Menu $setSubnt -Shift 1 -Prompt "Choice Subnet" -Header "[Stage $Stage..$Stages] Available Subnets:"}
+	If     ($setSubnt.Count -eq 0) {Throw "VirtualNetwork '$VirtualNetwork' doesn't have any Subnets"}
+	ElseIf ($setSubnt.Count -eq 1) {$Subnet = $setSubnt[0]; Write-Host "[Stage $Stage..$Stages] The sole Subnet '$($Subnet.Name)' have selected by default" -ForegroundColor Yellow}
+	Else   {$Subnet = Write-Menu -Menu $setSubnt -Shift 1 -Prompt "Select Subnet" -Header "[Stage $Stage..$Stages] Available Subnets:"}
 	
 	### JSON :: [parameters('vmnicStaticIP')] ###
 	If ($Environment -ne 'MSDN') {
@@ -376,7 +379,7 @@ Begin
 		$SubnetAddressBytes = $SubnetAddress.GetAddressBytes()
 		$rgxIP = '^' + ($SubnetAddressBytes[0..($Octats-1)] -join '.') + '.'
 		Write-Host "[Stage $Stage..$Stages] Available IP Range [$SubnetAddress]:" -ForegroundColor Yellow
-		Do {Try {[ipaddress]$FirstStaticIP = Read-Host -Prompt "Choice First IP Address"} Catch {}} Until ($FirstStaticIP.ToString() -match $rgxIP -and $?)
+		Do {Try {[ipaddress]$FirstStaticIP = Read-Host -Prompt "Select First IP Address"} Catch {}} Until ($FirstStaticIP.ToString() -match $rgxIP -and $?)
 
 		If (15..254 -notcontains $FirstStaticIP.GetAddressBytes()[-1])    {Throw "The last octat of the first IP address must be in the range [15..254]"}
 		If (($FirstStaticIP.GetAddressBytes()[-1] + $VMCount -1) -gt 254) {Throw "Not enougth IP addresses in the subnet for $VMCount VM, decrease the first IP address"}
@@ -391,7 +394,7 @@ Begin
 	$rgxVMSize = '_(D|G)S'
 	If ($StorageAccount.Sku.Tier -notmatch 'premium') {$setVMSiz = (Get-AzureRmVMSize -Location ((Get-AzureRmResourceGroup -Name $ResourceGroup).Location)).Name |sort}
 	Else {$setVMSiz = (Get-AzureRmVMSize -Location ((Get-AzureRmResourceGroup -Name $ResourceGroup).Location) |? {$_.Name -match $rgxVMSize}).Name |sort}
-	$VMSize = Write-Menu -Menu $setVMSiz -Shift 1 -Prompt "Choice VM Size" -Header "[Stage $Stage..$Stages] Available VM Sizes for '$($StorageAccount.Sku.Name)' StorageAccount:"
+	$VMSize = Write-Menu -Menu $setVMSiz -Shift 1 -Prompt "Select VM Size" -Header "[Stage $Stage..$Stages] Available VM Sizes for '$($StorageAccount.Sku.Name)' StorageAccount:"
 	
 	### Image parameters                       ###
 	### JSON :: [parameters('imagePublisher')] ###
@@ -408,15 +411,15 @@ Begin
 	}
 	If ($NoFilter) {$setVMSku = (Get-AzureRmVMImageSku -Location ((Get-AzureRmResourceGroup -Name $ResourceGroup).Location) -Offer $skuOffer -PublisherName $skuPublisher).Skus |sort}
 	Else           {$setVMSku = (Get-AzureRmVMImageSku -Location ((Get-AzureRmResourceGroup -Name $ResourceGroup).Location) -Offer $skuOffer -PublisherName $skuPublisher |? {$_.Skus -notmatch $rgxVmSku}).Skus |sort}
-	$VMSku = Write-Menu -Menu $setVMSku -Shift 1 -Prompt "Choice VM Image" -Header "[Stage $Stage..$Stages] Available VM Images:"
+	$VMSku = Write-Menu -Menu $setVMSku -Shift 1 -Prompt "Select VM Image" -Header "[Stage $Stage..$Stages] Available VM Images:"
 	
 	### JSON :: [parameters('avSet')] ###
 	If ($HighAvailable) {
 		$Stage++
 		$setAvSet = @((Get-AzureRmAvailabilitySet -ResourceGroupName $ResourceGroup).Name |sort)
 		If     ($setAvSet.Length -eq 0) {Throw "ResourceGroup '$ResourceGroup' doesn't have any Availability Sets"}
-		ElseIf ($setAvSet.Length -eq 1) {$AvailabilitySet = $setAvSet[0]; Write-Host "[Stage $Stage..$Stages] The sole Availability Set '$AvailabilitySet' was choicen by default" -ForegroundColor Yellow}
-		Else   {$AvailabilitySet = Write-Menu -Menu $setAvSet -Shift 1 -Prompt "Choice Availability Set" -Header "[Stage $Stage..$Stages] Available Availability Sets:"}
+		ElseIf ($setAvSet.Length -eq 1) {$AvailabilitySet = $setAvSet[0]; Write-Host "[Stage $Stage..$Stages] The sole Availability Set '$AvailabilitySet' have selected by default" -ForegroundColor Yellow}
+		Else   {$AvailabilitySet = Write-Menu -Menu $setAvSet -Shift 1 -Prompt "Select Availability Set" -Header "[Stage $Stage..$Stages] Available Availability Sets:"}
 	}
 	
 	### JSON :: [parameters('vmName')] ###
