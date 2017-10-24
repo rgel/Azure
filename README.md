@@ -13,6 +13,8 @@
 
 ### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module) Azure Automation PowerShell Module
 
+<ins>Requirements:</ins> PowerShell 5 or above. To check, type the following command: `$PSVersionTable.PSVersion.Major`.
+
 To install this module, drop the entire '<b>Az-Module</b>' folder into one of your module directories.
 
 The default PowerShell module paths are listed in the `$env:PSModulePath` environment variable.
@@ -31,21 +33,23 @@ For help on each individual cmdlet or function, run `Get-Help CmdletName -Full [
 
 To start using the module functions:
 
-+ Install <b>Azure Resource Manager Module</b> module from Microsoft PSGallery by `Install-Module AzureRM`.
++ Install <b>Azure Resource Manager Module</b> module from Microsoft PSGallery by `Install-Module AzureRm`.
 + Connect to your Azure account by `Login-AzureRmAccount` cmdlet.
-+ Optionally, select your target subscription by `Select-AzureRmSubscription` cmdlet.
++ Optionally, select your target subscription by `Select-AzSubscription` function.
 
 |No|Function|Description|
 |----|----|----|
-|1|[<b>Select-AzResourceGroup</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Interactively select Azure ResourceGroup Name|
-|2|[<b>Select-AzObject</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Interactively select an Azure object (`VM`, `StorageAccount`, `VNET`, `AvailabilitySet`)|
-|3|[<b>New-AzCredProfile</b>](https://ps1code.com/2017/07/05/login-to-azure-automatically)|Set your PowerShell session to automatically login to the Azure|
-|4|[<b>Get-AzOrphanedVhd</b>](https://ps1code.com/2017/07/05/azure-orphaned-vhd)|Get Azure orphaned `*.VHD` files|
-|5|<b>Get-AzSubnet</b>|Get Azure VNET Subnets|
-|6|<b>Get-AzVmPowerState</b>|Get Azure VM(s) Power State|
-|7|[<b>Get-AzVmTag / Add-AzVmTag</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Get/Add/Set Azure VM Resource Tag(s)|
-|8|[<b>Get-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Get Azure VM Virtual Disks (`OS Disk`, `Data Disk`, `All`)|
-|9|[<b>New-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Add a new `Data Disk` to an Azure VM|
+|1|<b>Select-AzSubscription</b>|Interactively select Azure Subscription|
+|2|[<b>Select-AzResourceGroup</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Interactively select Azure ResourceGroup name|
+|3|[<b>Select-AzObject</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Interactively select an Azure object (`VM`, `StorageAccount`, `VNET`, `AvailabilitySet`)|
+|4|[<b>New-AzCredProfile</b>](https://ps1code.com/2017/07/05/login-to-azure-automatically)|Set your PowerShell session to automatically login to the Azure|
+|5|[<b>Get-AzOrphanedVhd</b>](https://ps1code.com/2017/07/05/azure-orphaned-vhd)|Find Azure orphaned `*.VHD` files|
+|6|<b>Get-AzSubnet</b>|Get busy IP on Azure Subnets|
+|7|<b>Get-AzVmPowerState</b>|Get Azure VM Power State|
+|8|[<b>Get-AzVmTag / Add-AzVmTag</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Get/Add/Set Azure VM Resource Tag(s)|
+|9|[<b>Get-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Get Azure VM Virtual Disks (`OSDisk`, `DataDisk`, `All`)|
+|10|[<b>New-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Add a new `DataDisk` to an Azure VM|
+|11|[<b>Expand-AzVmDisk</b>](https://ps1code.com/2017/10/24/azure-vm-increase-disk)|Increase Azure VM disks|
 
 ##
 Stay tuned for the updates!
