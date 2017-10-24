@@ -1,3 +1,21 @@
+Class AzDisk
+{
+	[ValidateNotNullOrEmpty()][string]$ResourceGroup
+	[ValidateNotNullOrEmpty()][string]$VM
+	[ValidateNotNullOrEmpty()][string]$VMSize
+	[ValidateNotNullOrEmpty()][string]$DiskName
+	[ValidateNotNullOrEmpty()][string]$DiskType
+	[ValidateNotNullOrEmpty()][int]$Index
+	[ValidateNotNullOrEmpty()][int]$Lun
+	[ValidateNotNullOrEmpty()][string]$StorageAccount
+	[ValidateNotNullOrEmpty()][string]$Container
+	[ValidateNotNullOrEmpty()][string]$Vhd
+	[ValidateNotNullOrEmpty()][string]$Path
+	[ValidateNotNullOrEmpty()][int]$SizeGB
+	[ValidateNotNullOrEmpty()][string]$Cache
+	[ValidateNotNullOrEmpty()][string]$Created
+}
+
 Function Get-AzVmPowerState
 {
 	
@@ -21,9 +39,9 @@ Function Get-AzVmPowerState
 	Dependency  :: AzureRm PowerShell Module
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0
-	Version 1.0 :: 20-Jun-2016 :: [Release] :: Filter
+	Version 1.0 :: 20-Jun-2016 :: [Release] :: Publicly available :: Filter
 	Version 1.1 :: 10-Jan-2017 :: [Change]  :: Warnings suppressed
-	Version 2.0 :: 27-Jun-2017 :: [Release] :: Rewritten from Filter to Function
+	Version 2.0 :: 27-Jun-2017 :: [Release] :: Publicly available :: Rewritten from Filter to Function
 .LINK
 	https://ps1code.com/category/powershell/azure/az-module/
 #>
@@ -103,8 +121,8 @@ Function Get-AzVmTag
 	Dependency  :: AzureRm PowerShell Module
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0
-	Version 1.0 :: 20-Jun-2016 :: [Release] :: Filter
-	Version 2.0 :: 27-Jun-2017 :: [Release] :: Rewritten from Filter to Function
+	Version 1.0 :: 20-Jun-2016 :: [Release] :: Publicly available :: Filter
+	Version 2.0 :: 27-Jun-2017 :: [Release] :: Publicly available :: Rewritten from Filter to Function
 .LINK
 	https://ps1code.com/2017/06/29/azure-vm-tags
 #>
@@ -193,7 +211,7 @@ Function Add-AzVmTag
 	Dependency  :: AzureRm PowerShell Module
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0
-	Version 1.0 :: 27-Jun-2016 :: [Release]
+	Version 1.0 :: 27-Jun-2016 :: [Release] :: Publicly available
 	Version 1.1 :: 27-Jun-2017 :: [Change] :: Code optimization, aliases added, new examples
 	Version 1.2 :: 28-Jun-2017 :: [Bugfix] :: Tag/Value Parameters edited
 .LINK
@@ -355,7 +373,7 @@ Function Get-AzOrphanedVhd
 	Dependency  :: AzureRm and Azure.Storage PowerShell Modules
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0 | Azure.Storage v.2.7.0
-	Version 1.0 :: 14-Jul-2016 :: [Release]
+	Version 1.0 :: 14-Jul-2016 :: [Release] :: Publicly available
 	Version 1.1 :: 03-Apr-2017 :: [Change]  :: Added two properties (State, Status) to the returned object [Thanks to Javier González Tejada]
 .LINK
 	https://ps1code.com/2017/07/05/azure-orphaned-vhd
@@ -444,16 +462,17 @@ Function Get-AzVmDisk
 .NOTES
 	Author      :: Roman Gelman @rgelman75
 	Dependency  :: AzureRM PowerShell Module
-	Shell       :: Tested on PowerShell 5.1
-	Platform    :: Tested on AzureRm v.3.7.0 | AzureRM.Compute v.2.8.0
-	Version 1.0 :: 31-Aug-2016 :: [Release]
+	Shell       :: Tested on PowerShell 5.0/5.1
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 31-Aug-2016 :: [Release] :: Publicly available
 	Version 1.1 :: 26-Jun-2017 :: [Change] :: Code optimization
+	Version 2.0 :: 19-Oct-2017 :: [Change] :: Returned object type changed from [PSCustomObject] to [AzDisk]
 .LINK
 	https://ps1code.com/2017/07/05/azure-vm-add-data-disk
 #>
 
 	[CmdletBinding()]
-	[OutputType([PSCustomObject])]
+	[OutputType([AzDisk])]
 	Param (
 		[Parameter(Mandatory, ValueFromPipeline)]
 		[Alias("AzureVm")]
@@ -476,11 +495,13 @@ Function Get-AzVmDisk
 			$OsDiskUri = $VmOsDisk.Vhd.Uri
 			$OsDiskUriX = [regex]::Match($OsDiskUri, $rgxUri)
 			
-			[pscustomobject]@{
+			[AzDisk] @{
+				ResourceGroup = $VM.ResourceGroupName
 				VM = $VM.Name
 				VMSize = $VM.HardwareProfile.VmSize
 				DiskName = $VmOsDisk.Name
 				DiskType = 'OSDisk'
+				Index = -1
 				Lun = -1
 				StorageAccount = $OsDiskUriX.Groups['StorageAccount'].Value
 				Container = $OsDiskUriX.Groups['Container'].Value
@@ -495,24 +516,27 @@ Function Get-AzVmDisk
 		if ('DataDisk', 'All' -contains $DiskType)
 		{
 			$VmDataDisks = $VM.StorageProfile.DataDisks
-			foreach ($DataDisk in $VmDataDisks)
+
+			for ($i = 0; $i -lt $VmDataDisks.Count; $i++)
 			{
-				$DataDiskUri = $DataDisk.Vhd.Uri
+				$DataDiskUri = $VmDataDisks[$i].Vhd.Uri
 				$DataDiskUriX = [regex]::Match($DataDiskUri, $rgxUri)
 				
-				[pscustomobject] @{
+				[AzDisk] @{
+					ResourceGroup = $VM.ResourceGroupName
 					VM = $VM.Name
 					VMSize = $VM.HardwareProfile.VmSize
-					DiskName = $DataDisk.Name
+					DiskName = $VmDataDisks[$i].Name
 					DiskType = 'DataDisk'
-					Lun = $DataDisk.Lun
+					Index = $i
+					Lun = $VmDataDisks[$i].Lun
 					StorageAccount = $DataDiskUriX.Groups['StorageAccount'].Value
 					Container = $DataDiskUriX.Groups['Container'].Value
 					Vhd = $DataDiskUriX.Groups['Vhd'].Value
 					Path = $DataDiskUri
-					SizeGB = $DataDisk.DiskSizeGB
-					Cache = $DataDisk.Caching
-					Created = $DataDisk.CreateOption
+					SizeGB = $VmDataDisks[$i].DiskSizeGB
+					Cache = $VmDataDisks[$i].Caching
+					Created = $VmDataDisks[$i].CreateOption
 				}
 			}
 		}
@@ -541,28 +565,31 @@ Function New-AzVmDisk
 .PARAMETER Caching
 	Specifies Disk caching mode.
 .EXAMPLE
-	PS C:\> Get-AzureRmVM -ResourceGroupName $AzResourceGroup -VMName 'azvm1' |New-AzVmDisk |Format-Table -AutoSize
+	PS C:\> Select-AzResourceGroup |Select-AzObject -ObjectType VM |New-AzVmDisk |Format-Table -AutoSize
 	Add a new data disk with all default options.
 .EXAMPLE
-	PS C:\> Get-AzureRmVM -ResourceGroupName $AzResourceGroup -VMName 'azvm1' |New-AzVmDisk -StorageAccount Prompt
+	PS C:\> Select-AzResourceGroup |Select-AzObject VM |New-AzVmDisk -StorageAccount Prompt
 	Give an option to pick a StorageAccount from a menu.
 .EXAMPLE
-	PS C:\> Get-AzureRmVM -ResourceGroupName $AzResourceGroup -VMName 'azvm1' |New-AzVmDisk -SizeGB 10 -Caching SqlLog
+	PS C:\> Select-AzResourceGroup |Select-AzObject VM |New-AzVmDisk -SizeGB 10 -Caching SqlLog
 	Add 10 GiB disk with caching mode recommended by Microsoft for SQL logs.
+.EXAMPLE
+	PS C:\> Select-AzResourceGroup |Select-AzObject VM |New-AzVmDisk OSDisk 10 |select * -exclude Path
 .NOTES
 	Author      :: Roman Gelman @rgelman75
 	Dependency  :: AzureRM PowerShell Module, Get-AzVmDisk function (part of this Module)
-	Shell       :: Tested on PowerShell 5.1
-	Platform    :: Tested on AzureRm v.3.7.0 | AzureRM.Compute v.2.8.0 | AzureRM.Storage v.2.7.0
-	Version 1.0 :: 31-Aug-2016 :: [Release]
+	Shell       :: Tested on PowerShell 5.0/5.1
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 31-Aug-2016 :: [Release] :: Publicly available
 	Version 1.1 :: 26-Jun-2017 :: [Change] :: Code optimization
+	Version 2.0 :: 19-Oct-2017 :: [Change] :: Returned object type changed from [PSCustomObject] to [AzDisk], maximum disk size [$SizeGB] increased to 4TB
 .LINK
 	https://ps1code.com/2017/07/05/azure-vm-add-data-disk
 #>
 	
 	[CmdletBinding()]
 	[Alias("Add-AzVmDisk")]
-	[OutputType([PSCustomObject])]
+	[OutputType([AzDisk])]
 	Param (	
 		[Parameter(Mandatory, ValueFromPipeline)]
 		[Alias("AzureVm")]
@@ -573,11 +600,11 @@ Function New-AzVmDisk
 		[Alias("sa")]
 		[string]$StorageAccount = 'OSDisk'
 		 ,
-		[Parameter(Mandatory = $false, Position = 3)]
-		[ValidateRange(10, 1023)]
+		[Parameter(Mandatory = $false, Position = 2)]
+		[ValidateRange(10, 4095)]
 		[uint16]$SizeGB = 100
 		 ,
-		[Parameter(Mandatory = $false, Position = 2)]
+		[Parameter(Mandatory = $false, Position = 3)]
 		[ValidateSet("None", "ReadOnly", "ReadWrite", "SqlLog", "SqlTempDB", "SqlData")]
 		[string]$Caching = 'None'
 	)
@@ -675,7 +702,7 @@ Function New-AzVmDisk
 						   -CurrentOperation "StorageAccount [$StorageAccountName] | DiskName [$DataDiskName] | LUN [$DataDiskLun] | Size [$SizeGB GiB] | Caching [$Cache]"
 			$null = Add-AzureRmVMDataDisk -VM $VM -Name $DataDiskName -Lun $DataDiskLun -CreateOption empty -DiskSizeInGB $SizeGB -VhdUri $DataDiskUri -Caching $Cache
 			$null = Update-AzureRmVM -VM $VM -ResourceGroupName $ResourceGroup
-			Get-AzureRmVm -ResourceGroupName $ResourceGroup -VMName $VM.Name | Get-AzVmDisk | select * -exclude Path
+			Get-AzureRmVm -ResourceGroupName $ResourceGroup -VMName $VM.Name | Get-AzVmDisk
 		}
 		Catch
 		{
@@ -688,6 +715,86 @@ Function New-AzVmDisk
 	}
 	
 } #EndFunction New-AzVmDisk
+
+Function Expand-AzVmDisk
+{
+	
+<#
+.SYNOPSIS
+	Increase Azure VM disk.
+.DESCRIPTION
+	This function increases Azure IaaS Virtual Machine OS or Data disk.
+.PARAMETER Disk
+	Azure VM Disk object(s), returned by Get-AzVmDisk function.
+.PARAMETER SizeGB
+	Specifies resultant disk size in GB.
+.EXAMPLE
+	PS C:\> Select-AzResourceGroup | Select-AzObject -ObjectType VM | Get-AzVmDisk | Expand-AzVmDisk 150
+	Increase any disk, the VM deallocation will be required.
+.EXAMPLE
+	PS C:\> Select-AzResourceGroup | Select-AzObject VM | Get-AzVmDisk DataDisk | Expand-AzVmDisk 4095
+	Increase one or more DataDisks to a maximum allowed size.
+.EXAMPLE
+	PS C:\> Select-AzResourceGroup | Select-AzObject VM | Get-AzVmDisk OSDisk | Expand-AzVmDisk 2048
+	Increase OSDisk to a maximum allowed size.
+.NOTES
+	Author      :: Roman Gelman @rgelman75
+	Dependency  :: AzureRM PowerShell Module; Get-AzVmDisk, Get-AzVmPowerState, Write-Menu functions
+	Shell       :: Tested on PowerShell 5.0/5.1
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 19-Oct-2017 :: [Release] :: Publicly available
+.LINK
+	https://ps1code.com/2017/10/24/azure-vm-increase-disk
+#>
+	
+	[CmdletBinding(ConfirmImpact = 'High', SupportsShouldProcess)]
+	[OutputType([AzDisk])]
+	Param (
+		[Parameter(Mandatory, ValueFromPipeline)]
+		[AzDisk]$Disk
+		 ,
+		[Parameter(Mandatory, Position = 0)]
+		[ValidateRange(10, 4095)]
+		[uint16]$SizeGB
+	)
+	
+	Begin
+	{
+		$ErrorActionPreference = 'Stop'
+		$WarningPreference = 'SilentlyContinue'
+	}
+	Process
+	{
+		if ($SizeGB -le $Disk.SizeGB) { Throw "The resultant disk size must be greater than $($Disk.SizeGB) GB!" }
+		if ($Disk.DiskType -eq 'OSDisk' -and $SizeGB -gt 2048) { Throw "The maximum allowed size for OSDisks is 2048 GB!" }
+		
+		### Deallocate running VM ###
+		$PowerOn = $false
+		$VM = Get-AzureRmVM -Name $Disk.VM -ResourceGroupName $Disk.ResourceGroup
+		if (($VM | Get-AzVmPowerState).PowerState -ne 'Deallocated' -and $Disk.DiskType -eq 'OSDisk')
+		{
+			$resStop = $VM | Stop-AzureRmVM
+			if ($resStop.Status -ne 'Succeeded') { Throw $resStop.Error } else { $PowerOn = $true }
+		}
+		
+		if ($PSCmdlet.ShouldProcess("[$($Disk.VMSize)] VM [$($Disk.VM)]", "Increase $($Disk.DiskType) [$($Disk.DiskName)] to $($SizeGB)GB"))
+		{
+			### Increase disk ###
+			if ($Disk.DiskType -eq 'OSDisk') { $VM.StorageProfile.OSDisk.DiskSizeGB = $SizeGB }
+			else { $VM.StorageProfile.DataDisks[$($Disk.Index)].DiskSizeGB = $SizeGB }
+			$resUpdate = $VM | Get-AzureRmVM | Update-AzureRmVM
+			
+			### PowerOn VM if it was PoweredOn before ##
+			if ($resUpdate.IsSuccessStatusCode)
+			{
+				$VM | Get-AzVmDisk
+				if ($PowerOn) { $VM | Start-AzureRmVm | Out-Null }
+			}
+			else { $resUpdate.ReasonPhrase }
+		}
+	}
+	
+} #EndFunction Expand-AzVmDisk
 
 Function New-AzCredProfile
 {
@@ -717,7 +824,7 @@ Function New-AzCredProfile
 	Requirement :: AzureRM Module version 2.0+
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0
-	Version 1.0 :: 04-Jan-2017 :: [Release]
+	Version 1.0 :: 04-Jan-2017 :: [Release] :: Publicly available
 	Version 1.1 :: 10-Jan-2017 :: [Multiple Changes]
 	   [Bugfix] :: Empty `$PROFILE` file was not processed
 	   [Change] :: Suppressed confirmation on existing Azure profile
@@ -812,12 +919,14 @@ Function Select-AzResourceGroup
 	Azure ResourceGroup Name.
 .EXAMPLE
 	PS C:\> Select-AzResourceGroup
+.EXAMPLE
+	PS C:\> Get-AzureRmVM -ResourceGroupName (Select-AzResourceGroup) |Get-AzVmPowerState |ft -au
 .NOTES
 	Author      :: Roman Gelman @rgelman75
 	Dependency  :: AzureRM PowerShell Module, Write-Menu function (part of this Module)
 	Shell       :: Tested on PowerShell 5.1
-	Platform    :: Tested on AzureRm v.3.7.0
-	Version 1.0 :: 26-Jun-2017 :: [Release]
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 26-Jun-2017 :: [Release] :: Publicly available
 .LINK
 	https://ps1code.com/2017/06/29/azure-vm-tags
 #>
@@ -848,6 +957,59 @@ Function Select-AzResourceGroup
 	}
 	
 } #EndFunction Select-AzResourceGroup
+
+Function Select-AzSubscription
+{
+	
+<#
+.SYNOPSIS
+	Interactively select Azure Subscription.
+.DESCRIPTION
+	This function allows interactively (from Menu list) to select
+	Azure Subscription name and pass it to Select-AzureRmSubscription cmdlet.
+.EXAMPLE
+	PS C:\> Select-AzSubscription
+.NOTES
+	Author      :: Roman Gelman @rgelman75
+	Dependency  :: AzureRM PowerShell Module, Write-Menu function (part of this Module)
+	Shell       :: Tested on PowerShell 5.0/5.1
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 24-Aug-2017 :: [Release] :: Publicly available
+	Version 1.1 :: 19-Oct-2017 :: [Feature] :: New parameter -Title
+.LINK
+	https://ps1code.com/
+#>
+	
+	[CmdletBinding()]
+	[Alias("sazsu")]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[switch]$Title
+	)
+	
+	Begin
+	{
+		$ErrorActionPreference = 'Stop'
+		$WarningPreference = 'SilentlyContinue'
+	}
+	Process
+	{
+		$DefaultProperty = 'Name'
+		$SubscriptionName = (menu -Menu (Get-AzureRmSubscription | sort $DefaultProperty) `
+					 -PropertyToShow $DefaultProperty `
+					 -Header 'Available Subscriptions' `
+					 -Prompt 'Select Subscription' `
+					 -HeaderColor 'Yellow' -TextColor 'White' -Shift 1
+		).$DefaultProperty
+		$res = Select-AzureRmSubscription -SubscriptionName $SubscriptionName
+		if ($Title) { $Host.UI.RawUI.WindowTitle = "$($res.Environment) - [$SubscriptionName]" }
+	}
+	End
+	{
+		$res
+	}
+	
+} #EndFunction Select-AzSubscription
 
 Function Select-AzObject
 {
@@ -881,13 +1043,13 @@ Function Select-AzObject
 	Dependency  :: AzureRM PowerShell Module, Write-Menu function (part of this Module)
 	Shell       :: Tested on PowerShell 5.1
 	Platform    :: Tested on AzureRm v.3.7.0
-	Version 1.0 :: 26-Jun-2017 :: [Release]
+	Version 1.0 :: 26-Jun-2017 :: [Release] :: Publicly available
 .LINK
 	https://ps1code.com/2017/06/29/azure-vm-tags
 #>
 	
 	[CmdletBinding()]
-	[Alias("sazo")]
+	[Alias("sazob")]
 	Param (
 		[Parameter(Mandatory = $false, ValueFromPipeline, ValueFromPipelineByPropertyName)]
 		[ValidateNotNullOrEmpty()]
@@ -974,30 +1136,41 @@ Function Get-AzSubnet
 	
 <#
 .SYNOPSIS
-	Get Azure Subnets.
+	Get Azure Subnets Busy IP addresses.
 .DESCRIPTION
-	This function retrieves Azure Subnets.
+	This function retrieves busy IP addresses in each Azure Subnet.
 .PARAMETER VirtualNetwork
 	Specifies Azure VirtualNetwork object(s), returned by Get-AzureRmVirtualNetwork cmdlet.
 .EXAMPLE
 	PS C:\> Get-AzureRmVirtualNetwork | Get-AzSubnet
 .EXAMPLE
 	PS C:\> Select-AzObject VirtualNetwork | Get-AzSubnet
+	Interactively select VNET and get Subnets info.
 .EXAMPLE
-	PS C:\> Get-AzureRmVirtualNetwork | Get-AzSubnet | ? {$_.Address -like '172.23.*'}
+	PS C:\> Select-AzObject VirtualNetwork | Get-AzSubnet | ? {$_.Address -like '172.23.*'}
+	Find Subnets which IP address concerns to 172.23.x.x networks.
 .EXAMPLE
-	PS C:\> Get-AzureRmVirtualNetwork | Get-AzSubnet | ? {$_.Subnet -match '^dmz'}
+	PS C:\> Select-AzObject VirtualNetwork | Get-AzSubnet | ? {$_.Subnet -match '^dmz'}
+	Find Subnets which names start from 'dmz'.
+.EXAMPLE
+	PS C:\> Select-AzObject VNET | Get-AzSubnet | ? {$_.BusyIP -contains '172.31.2.100'}
+	Check if particular IP is currently being busy.
+.EXAMPLE
+	PS C:\> (Select-AzObject VNET | Get-AzSubnet).Where{$_.Subnet -eq 'test-subnet-1'} | select -expand BusyIP
+	Expand BusyIP property for particular subnet.
 .NOTES
 	Author      :: Roman Gelman @rgelman75
 	Dependency  :: AzureRM PowerShell Module
-	Shell       :: Tested on PowerShell 5.1
-	Platform    :: Tested on AzureRm v.3.7.0 | AzureRM.Network v.3.6.0
-	Version 1.0 :: 26-Jun-2017 :: [Release]
+	Shell       :: Tested on PowerShell 5.0/5.1
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 26-Jun-2017 :: [Release] :: Publicly available
+	Version 1.1 :: 24-Aug-2017 :: [Improvement] :: Added property [BusyIP] for every Subnet
 .LINK
 	https://ps1code.com/category/powershell/azure/az-module/
 #>
 	
 	[CmdletBinding()]
+	[Alias("Get-AzBusyIP")]
 	[OutputType([PSCustomObject])]
 	Param (
 		[Parameter(Mandatory, ValueFromPipeline)]
@@ -1005,26 +1178,34 @@ Function Get-AzSubnet
 	)
 	
 	Begin
-	{
-		
-	}
+	{ }
 	Process
 	{
-		$Subnets = $VirtualNetwork | select -expand Subnets |
-		select Name, AddressPrefix | sort AddressPrefix
+		$IPs = Get-AzureRmNetworkInterface | ? { $_.VirtualMachine.Id } |
+		select @{ N = 'IP'; E = { $_.IpConfigurations.PrivateIpAddress } },
+		  	   @{ N = 'Subnet'; E = { $script:subnet = if ($_.IpConfigurations.Subnet.Id.GetType().Name -eq 'string') `
+				{ $_.IpConfigurations.Subnet.Id } `
+				else { $_.IpConfigurations.Subnet.Id[0] } `
+				[regex]::Match($script:subnet, 'subnets/(.+)$').Groups[1].Value } } | ? { $_.IP -match '\.' } | sort Subnet, IP
+		
+		$Subnets = $VirtualNetwork | select -expand Subnets | select Name, AddressPrefix | sort Name
 		
 		foreach ($Subnet in $Subnets)
 		{
+			$BusyIP = @()
+			foreach ($IP in $IPs)
+			{
+				if ($Subnet.Name -eq $IP.Subnet) { $BusyIP += $IP.IP }
+			}
 			[pscustomobject] @{
 				Network = $VirtualNetwork.Name
 				Subnet = $Subnet.Name
 				Address = $Subnet.AddressPrefix
-			}	
+				BusyIP = $BusyIP
+			}
 		}
 	}
 	End
-	{
-		
-	}
+	{ }
 	
 } #EndFunction Get-AzSubnet
