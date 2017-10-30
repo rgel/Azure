@@ -969,6 +969,8 @@ Function Select-AzSubscription
 	Azure Subscription name and pass it to Select-AzureRmSubscription cmdlet.
 .EXAMPLE
 	PS C:\> Select-AzSubscription
+.EXAMPLE
+	PS C:\> Select-AzSubscription -Title
 .NOTES
 	Author      :: Roman Gelman @rgelman75
 	Dependency  :: AzureRM PowerShell Module, Write-Menu function (part of this Module)
@@ -1141,6 +1143,8 @@ Function Get-AzSubnet
 	This function retrieves busy IP addresses in each Azure Subnet.
 .PARAMETER VirtualNetwork
 	Specifies Azure VirtualNetwork object(s), returned by Get-AzureRmVirtualNetwork cmdlet.
+.PARAMETER Name
+	Specifies Subnet name.
 .EXAMPLE
 	PS C:\> Get-AzureRmVirtualNetwork | Get-AzSubnet
 .EXAMPLE
@@ -1150,13 +1154,13 @@ Function Get-AzSubnet
 	PS C:\> Select-AzObject VirtualNetwork | Get-AzSubnet | ? {$_.Address -like '172.23.*'}
 	Find Subnets which IP address concerns to 172.23.x.x networks.
 .EXAMPLE
-	PS C:\> Select-AzObject VirtualNetwork | Get-AzSubnet | ? {$_.Subnet -match '^dmz'}
+	PS C:\> Select-AzObject VirtualNetwork | Get-AzSubnet | ? {$_.Subnet -like 'dmz*'}
 	Find Subnets which names start from 'dmz'.
 .EXAMPLE
-	PS C:\> Select-AzObject VNET | Get-AzSubnet | ? {$_.BusyIP -contains '172.31.2.100'}
+	PS C:\> Select-AzObject VNET | Get-AzSubnet -Name subnet1 | ? {$_.BusyIP -contains '172.31.2.100'}
 	Check if particular IP is currently being busy.
 .EXAMPLE
-	PS C:\> (Select-AzObject VNET | Get-AzSubnet).Where{$_.Subnet -eq 'test-subnet-1'} | select -expand BusyIP
+	PS C:\> Select-AzObject VNET | Get-AzSubnet test-subnet-1 | select -expand BusyIP
 	Expand BusyIP property for particular subnet.
 .NOTES
 	Author      :: Roman Gelman @rgelman75
@@ -1165,8 +1169,9 @@ Function Get-AzSubnet
 	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 26-Jun-2017 :: [Release] :: Publicly available
 	Version 1.1 :: 24-Aug-2017 :: [Improvement] :: Added property [BusyIP] for every Subnet
+	Version 1.2 :: 29-Oct-2017 :: [Improvement] :: Added [-Name] parameter to specify Subnet name and [ResourceGroup] property, IP addresses sorted by Sort-IpAddress
 .LINK
-	https://ps1code.com/category/powershell/azure/az-module/
+	https://ps1code.com/2017/10/30/azure-ipam-powershell
 #>
 	
 	[CmdletBinding()]
@@ -1175,6 +1180,10 @@ Function Get-AzSubnet
 	Param (
 		[Parameter(Mandatory, ValueFromPipeline)]
 		[Microsoft.Azure.Commands.Network.Models.PSVirtualNetwork]$VirtualNetwork
+		 ,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[string]$Name
 	)
 	
 	Begin
@@ -1188,16 +1197,18 @@ Function Get-AzSubnet
 				else { $_.IpConfigurations.Subnet.Id[0] } `
 				[regex]::Match($script:subnet, 'subnets/(.+)$').Groups[1].Value } } | ? { $_.IP -match '\.' } | sort Subnet, IP
 		
-		$Subnets = $VirtualNetwork | select -expand Subnets | select Name, AddressPrefix | sort Name
+		
+		$Subnets = if ($PSBoundParameters.ContainsKey('Name')) { $VirtualNetwork | select -expand Subnets | select Name, AddressPrefix | ? { $_.Name -eq $Name } }
+		else { $VirtualNetwork | select -expand Subnets | select Name, AddressPrefix | sort Name }
 		
 		foreach ($Subnet in $Subnets)
 		{
 			$BusyIP = @()
-			foreach ($IP in $IPs)
-			{
-				if ($Subnet.Name -eq $IP.Subnet) { $BusyIP += $IP.IP }
-			}
+			foreach ($IP in $IPs) { if ($Subnet.Name -eq $IP.Subnet) { $BusyIP += $IP.IP } }
+			$BusyIP = $BusyIP | Invoke-SortIpAddress
+			
 			[pscustomobject] @{
+				ResourceGroup = $VirtualNetwork.ResourceGroupName
 				Network = $VirtualNetwork.Name
 				Subnet = $Subnet.Name
 				Address = $Subnet.AddressPrefix
