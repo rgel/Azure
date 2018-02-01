@@ -1,0 +1,180 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Machine Name."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Virtual Machine Size."
+      }
+    },
+    "vmTag": {
+      "type": "string",
+      "defaultValue": "Project Name / Manager Name",
+      "metadata": {
+        "description": "Virtual Machine Tag Value."
+      }
+    },
+    "vmNotes": {
+      "type": "string",
+      "defaultValue": "VMware VM Notes",
+      "metadata": {
+        "description": "Virtual Machine 'Notes' Tag Value."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Name."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet Name."
+      }
+    },
+    "vmnicStaticIP": {
+      "type": "string",
+      "metadata": {
+        "description": "VM Static IP Address."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "defaultValue": "Windows",
+      "allowedValues": [
+        "Windows",
+        "Linux"
+      ],
+      "metadata": {
+        "description": "Type of OS on the existing VHD"
+      }
+    },
+    "osDiskVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the existing OS VHD in ARM standard or premium storage"
+      }
+    },
+    "dataDisk1VhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the existing data disk VHD in ARM standard or premium storage"
+      }
+    },
+    "EnvironmentTag": {
+      "type": "string",
+      "defaultValue": "Test",
+      "allowedValues": [
+        "Test",
+        "Prod",
+        "Dev",
+        "Dmz"
+      ],
+      "metadata": {
+        "description": "Subscription Name."
+      }
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "OSDiskName": "[concat(parameters('vmName'),'_osdisk')]",
+    "nicName": "[concat(parameters('vmName'),'_vnic')]",
+    "vmPowerOnTime": "05:00",
+    "vmPowerOffTime": "18:00",
+    "storageDiag": "[concat(parameters('EnvironmentTag'),'diagstg001lrs')]",
+    "vnetResGroup": "[concat(parameters('EnvironmentTag'),'_infra-rg')]",
+    "vnetID": "[resourceId(variables('vnetResGroup'),'Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+    "apiVersion": "2015-06-15"
+  },
+  "resources": [
+    {
+      "comments": "VM's Network Adapter",
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[variables('location')]",
+      "tags": { "Environment": "[parameters('EnvironmentTag')]" },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('vmnicStaticIP')]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "VM",
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "Environment": "[parameters('EnvironmentTag')]",
+        "Project": "[parameters('vmTag')]",
+        "Notes": "[parameters('vmNotes')]",
+        "PowerOn": "[variables('vmPowerOnTime')]",
+        "PowerOff": "[variables('vmPowerOffTime')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "name": "[variables('OSDiskName')]",
+            "osType": "[parameters('osType')]",
+            "vhd": {
+              "uri": "[parameters('osDiskVhdUri')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "Attach"
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(parameters('vmName'),'_datadisk1')]",
+              "lun": 0,
+              "vhd": {
+                "uri": "[parameters('dataDisk1VhdUri')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Attach"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://',variables('storageDiag'),'.blob.core.windows.net')]"
+          }
+        }
+      }
+    }
+  ]
+}
