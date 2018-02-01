@@ -1220,3 +1220,160 @@ Function Get-AzSubnet
 	{ }
 	
 } #EndFunction Get-AzSubnet
+
+Function Select-AzLocation
+{
+	
+<#
+.SYNOPSIS
+	Interactively select Azure Location.
+.DESCRIPTION
+	This function allows interactively (from Menu list) to select Azure Location.
+.EXAMPLE
+	PS C:\> Select-AzLocation -NameOnly
+.EXAMPLE
+	PS C:\> Select-AzLocation | Get-AzureRmVMSize
+	Get all VMSizes available in the selected Azure Location.
+.NOTES
+	Author      :: Roman Gelman @rgelman75
+	Dependency  :: AzureRm PowerShell Module, Write-Menu function (part of this Module)
+	Shell       :: Tested on PowerShell 5.0
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 28-Jan-2018 :: [Release] :: Publicly available
+.LINK
+	https://ps1code.com/
+#>
+	
+	[CmdletBinding()]
+	[Alias("sazlo")]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[switch]$NameOnly
+	)
+	
+	Begin
+	{
+		$WarningPreference = 'SilentlyContinue'
+	}
+	Process
+	{
+		$DisplayProperty = 'DisplayName'
+		$NameProperty = 'Location'
+		
+		$AzObject = menu -Menu (Get-AzureRmLocation | sort $DisplayProperty) `
+					 -PropertyToShow $DisplayProperty `
+					 -Header 'Available Locations' `
+					 -Prompt 'Select Location' `
+					 -HeaderColor 'Yellow' -TextColor 'White' -Shift 1
+	}
+	End
+	{
+		if ($NameOnly) { $AzObject.$NameProperty } else { $AzObject }
+	}
+	
+} #EndFunction Select-AzLocation
+
+Function New-AzParamsJson
+{
+	
+<#
+.SYNOPSIS
+	Create Azure deployment parameters JSON file.
+.DESCRIPTION
+	This function creates Azure resource group deployment parameters json file
+	either from user provided parameters hash table or from source json template file.
+	If created successfully, the reference to the file is returned.
+.PARAMETER Params
+	Specifies parameters hashtable. Example: @{ParameterName1 = Value1; ParameterName2 = Value2;} etc.
+.PARAMETER TemplatePath
+	Specifies json template file full path.
+.PARAMETER JsonPath
+	Specifies json output file full path.
+	If the *.json extension is missed, it will be automatically added.
+.EXAMPLE
+	PS C:\> New-AzParamsJson C:\AzureDeploy\blank.params.json
+	Create a blank json with no parameters.
+.EXAMPLE
+	PS C:\> New-AzParamsJson -JsonPath C:\AzureDeploy\azvm1.params -Params @{'vmName' = 'azvm1'; 'vmSize' = 'Standard_D2_v3'; 'storageAccount' = 'azstg01lrs';} | Get-Content
+	Create a json with three parameters and view its content in the console.
+.EXAMPLE
+	PS C:\> New-AzParamsJson C:\AzureDeploy\Vm_from_Vhd.params -TemplatePath C:\AzureDeploy\Vm_from_Vhd.json
+	Create json parameters file, based on json template. The parameters' values will be empty.
+.EXAMPLE
+	PS C:\> Get-Item 'C:\AzureDeploy\Vm_from_Vhd.json' | New-AzParamsJson C:\AzureDeploy\Vm_from_Vhd.params | Get-Content
+	The template json may be pipelined to the function.
+.EXAMPLE
+	PS C:\> Get-ChildItem C:\AzureDeploy\ -Filter *.json -Recurse | ? { $_.BaseName -inotmatch '\.param(s|eters)$' } | % { New-AzParamsJson "$($_.DirectoryName)\$($_.BaseName).params" -TemplatePath $_.FullName }
+	Recursively create json parameter files for multiple json templates.
+	Place json in the same folder with a template and add '*.params.json' to the file name.
+.NOTES
+	Author      :: Roman Gelman @rgelman75
+	Requirement :: PowerShell 3.0
+	Shell       :: Tested on PowerShell 5.0
+	Version 1.0 :: 31-Jan-2018 :: [Release] :: Publicly available
+.LINK
+	https://ps1code.com/2018/02/01/azure-json-parameter-files
+#>
+	
+	[CmdletBinding(DefaultParameterSetName = 'FROMHASH')]
+	[OutputType([System.IO.FileInfo])]
+	[Alias("azjson")]
+	Param (
+		[Parameter(Mandatory = $false, ParameterSetName = 'FROMHASH')]
+		[hashtable]$Params
+		 ,
+		[Parameter(Mandatory, ValueFromPipeline, ParameterSetName = 'FROMTEMPLATE')]
+		[ValidateScript({ Test-Path $_ -PathType 'Leaf' })]
+		[string]$TemplatePath
+		 ,
+		[Parameter(Mandatory, Position = 0)]
+		[ValidateScript({ Test-Path (Split-Path $_) -PathType 'Container' })]
+		[string]$JsonPath
+	)
+	
+	Begin
+	{
+		$WarningPreference = 'SilentlyContinue'
+		
+		### Add .json extension if not exists ###
+		$JsonPath += if ($JsonPath -inotmatch '\.json$') { '.json' }
+	}
+	Process
+	{
+		### Populate initial hash table either from user input [-Params] or from JSON template file [-TemplatePath] ###
+		$ParamsHash = @{ }
+		if ($PSCmdlet.ParameterSetName -eq 'FROMHASH')
+		{
+			$ParamsHash = $Params
+		}
+		else
+		{
+			$jsonTemplate = Get-Item $TemplatePath | Get-Content | ConvertFrom-Json
+			$jsonTemplate.parameters | Get-Member -MemberType NoteProperty, Property | % { $ParamsHash.Add($_.Name, '') }
+		}
+		
+		### Populate Level2 & Level3 hash tables ###
+		$paramsL2 = @{ }
+		if ($ParamsHash)
+		{
+			$ParamsHash.Keys.GetEnumerator() | % {
+				$paramL3 = @{ }
+				$paramL3.Add('value', $ParamsHash.$_)
+				$paramsL2.Add($_, $paramL3)
+			}
+		}
+		
+		### High Level hash table ###
+		$hashL1 = [ordered]@{
+			'$schema' = 'https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#';
+			'contentVersion' = '1.0.0.0';
+			'parameters' = $paramsL2
+		}
+		
+		### Convert High Level hash table to PSObject, then to Json and then export to a file ###
+		[PSCustomObject]$hashL1 | ConvertTo-Json -Depth 3 | Out-File $JsonPath
+		if ($?) { Get-Item $JsonPath } else { $null }
+	}
+	End { }
+	
+} #EndFunction New-AzParamsJson
