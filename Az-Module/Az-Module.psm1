@@ -1170,6 +1170,7 @@ Function Get-AzSubnet
 	Version 1.0 :: 26-Jun-2017 :: [Release] :: Publicly available
 	Version 1.1 :: 24-Aug-2017 :: [Improvement] :: Added property [BusyIP] for every Subnet
 	Version 1.2 :: 29-Oct-2017 :: [Improvement] :: Added [-Name] parameter to specify Subnet name and [ResourceGroup] property, IP addresses sorted by Sort-IpAddress
+	Version 1.3 :: 05-Feb-2018 :: [Bugfix] :: Single IP in the [BusyIP] property returned as array
 .LINK
 	https://ps1code.com/2017/10/30/azure-ipam-powershell
 #>
@@ -1212,7 +1213,7 @@ Function Get-AzSubnet
 				Network = $VirtualNetwork.Name
 				Subnet = $Subnet.Name
 				Address = $Subnet.AddressPrefix
-				BusyIP = $BusyIP
+				BusyIP = @($BusyIP)
 			}
 		}
 	}
