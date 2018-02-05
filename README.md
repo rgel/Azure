@@ -4,9 +4,10 @@
 
 |No|Script|Description|
 |----|----|----|
-|1|[<b>Deploy-AzureVm.ps1</b>](https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)|Deploy multiple Azure Iaas VM from [JSON](https://github.com/rgel/Azure/tree/master/JSON) templates|
-|2|[<b>New-SecureCred.ps1</b>](https://github.com/rgel/Azure/blob/master/New-SecureCred.ps1)|Create file that contains encrypted password for Azure VM local admin account. The `adminPassword` parameter from [JSON](https://github.com/rgel/Azure/tree/master/JSON) templates|
-|3|[<b>Apply-AzVmPowerStatePolicy.ps1</b>](https://github.com/rgel/Azure/blob/master/Apply-AzVmPowerStatePolicy.ps1)|[Start/Stop](https://ps1code.com/2017/06/28/stop-start-azure-vm-schedule) Azure VM in parallel on schedule based on two VM Tags (`PowerOn`/`PowerOff`)|
+|1|[<b>Deploy-AzureVm.ps1</b>](https://github.com/rgel/Azure/blob/master/Deploy-AzureVm.ps1)|Deploy multiple Azure IaaS VM from [JSON](https://github.com/rgel/Azure/tree/master/JSON) templates|
+|2|[<b>Deploy-AzureVmVhd.ps1</b>](https://github.com/rgel/Azure/blob/master/Deploy-AzureVmVhd.ps1)|[Deploy](https://ps1code.com/2018/02/05/deploy-azure-vm-vhd-az-module) single Azure IaaS VM from VHD - [JSON](https://github.com/rgel/Azure/blob/master/JSON/New-AzParamsJson/Vm_Vhd_OSDisk.json) template|
+|3|[<b>New-SecureCred.ps1</b>](https://github.com/rgel/Azure/blob/master/New-SecureCred.ps1)|Create file that contains encrypted password for Azure VM local admin account. The `adminPassword` parameter from [JSON](https://github.com/rgel/Azure/tree/master/JSON) templates|
+|4|[<b>Apply-AzVmPowerStatePolicy.ps1</b>](https://github.com/rgel/Azure/blob/master/Apply-AzVmPowerStatePolicy.ps1)|[Start/Stop](https://ps1code.com/2017/06/28/stop-start-azure-vm-schedule) Azure VM in parallel on schedule based on two VM Tags (`PowerOn`/`PowerOff`)|
 
 ##
 ### MODULES
