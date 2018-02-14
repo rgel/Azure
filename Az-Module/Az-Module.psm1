@@ -1,4 +1,9 @@
-Class AzDisk
+Class AzModule
+{
+	
+}
+
+Class AzDisk : AzModule
 {
 	[ValidateNotNullOrEmpty()][string]$ResourceGroup
 	[ValidateNotNullOrEmpty()][string]$VM
@@ -14,6 +19,56 @@ Class AzDisk
 	[ValidateNotNullOrEmpty()][int]$SizeGB
 	[ValidateNotNullOrEmpty()][string]$Cache
 	[ValidateNotNullOrEmpty()][string]$Created
+	
+	[string] ToString () { return $this.Path }
+	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine] GetParentVM ()
+	{
+		return Get-AzureRmVM -ResourceGroupName $this.ResourceGroup -Name $this.VM -WarningAction SilentlyContinue
+	}
+}
+
+Class AzBlob : AzModule
+{
+	[ValidateNotNullOrEmpty()][string]$ResourceGroup
+	[ValidateNotNullOrEmpty()][string]$ParentStorageAccount
+	[ValidateNotNullOrEmpty()][string]$AccessKey
+	[ValidateNotNullOrEmpty()][string]$Location
+	[ValidateNotNullOrEmpty()][string]$BlobName
+	[ValidateNotNullOrEmpty()][uri]$BlobUri
+	[ValidateNotNullOrEmpty()][double]$SizeGB
+	[ValidateNotNullOrEmpty()][DateTimeOffset]$Modified
+	[ValidateNotNullOrEmpty()][string]$LeaseStatus
+	[ValidateNotNullOrEmpty()][string]$LeaseState
+	[ValidateNotNullOrEmpty()][string]$ContainerName
+	[ValidateNotNullOrEmpty()][uri]$ContainerUri
+	
+	[string] ToString () { return $this.BlobUri.OriginalString }
+	[string] GetParent () { return $this.ContainerUri.OriginalString }
+	[Microsoft.Azure.Commands.Management.Storage.Models.PSStorageAccount] GetStorageAccount ()
+	{
+		return Get-AzureRmStorageAccount -ResourceGroupName $this.ResourceGroup -Name $this.ParentStorageAccount -WarningAction SilentlyContinue
+	}
+}
+
+Class AzBlobContainer : AzModule
+{
+	[ValidateNotNullOrEmpty()][string]$ResourceGroup
+	[ValidateNotNullOrEmpty()][string]$ParentStorageAccount
+	[ValidateNotNullOrEmpty()][string]$AccessKey
+	[ValidateNotNullOrEmpty()][string]$Location
+	[ValidateNotNullOrEmpty()][string]$ContainerName
+	[ValidateNotNullOrEmpty()][uri]$ContainerUri
+	[ValidateNotNullOrEmpty()][string]$PublicAccess
+	[ValidateNotNullOrEmpty()][DateTimeOffset]$Modified
+	[ValidateNotNullOrEmpty()][string]$LeaseStatus
+	[ValidateNotNullOrEmpty()][string]$LeaseState
+	
+	[string] ToString () { return $this.ContainerUri.OriginalString }
+	[string] GetParent () { return $this.ParentStorageAccount }
+	[Microsoft.Azure.Commands.Management.Storage.Models.PSStorageAccount] GetStorageAccount ()
+	{
+		return Get-AzureRmStorageAccount -ResourceGroupName $this.ResourceGroup -Name $this.ParentStorageAccount -WarningAction SilentlyContinue
+	}
 }
 
 Function Get-AzVmPowerState
@@ -409,7 +464,7 @@ Function Get-AzOrphanedVhd
 		{
 			$ModifiedLocal = $Vhd.LastModified.LocalDateTime
 			$Now           = [datetime]::Now
-			### If a change was made less than 24 hours ago, but it was yesterday return one day and not zero ###
+			### If a change was made less than 24 hours ago, but it was yesterday returns one day and not zero ###
 			if (($Days = (New-TimeSpan -End $Now -Start $ModifiedLocal).Days) -eq 0)
 			{
 				if ($ModifiedLocal.Day-$Now.Day -eq 1 -or $ModifiedLocal.Day -lt $Now.Day) {$Days = 1}
@@ -428,13 +483,10 @@ Function Get-AzOrphanedVhd
 			}
 			$Object = New-Object PSObject -Property $Properties
 			### Return if not in the list only ###
-			If ($VmVhd -notcontains $Object.FullPath) {$Object}
+			if ($VmVhd -notcontains $Object.FullPath) { $Object }
 		}
 	}
-	End
-	{
-		
-	}
+	End { }
 
 } #EndFunction Get-AzOrphanedVhd
 
@@ -451,17 +503,17 @@ Function Get-AzVmDisk
 .PARAMETER DiskType
 	Specifies Virtual Disk Type.
 .EXAMPLE
-	PS C:\> Get-AzureRmVM -ResourceGroupName $AzResourceGroup -VMName 'azvm1' |Get-AzVmDisk
-	Get all Virtual Disks for a given VM.
+	PS C:\> Select-AzResourceGroup |Select-AzObject VM |Get-AzVmDisk
+	Get all Virtual Disks for selected VM.
 .EXAMPLE
 	PS C:\> Get-AzureRmVM -ResourceGroupName $AzResourceGroup |sort Name |Get-AzVmDisk |select * -exclude Path |ft -au
-	Get all Virtual Disks for all VM in specific ResourceGroup.
+	Get all Virtual Disks for all VM in a ResourceGroup.
 .EXAMPLE
-	PS C:\> Get-AzureRmVM -ResourceGroupName $AzResourceGroup |Get-AzVmDisk -DiskType DataDisk
-	Get only DataDisks for all VM in specific ResourceGroup.
+	PS C:\> Get-AzureRmVM -ResourceGroupName $AzResourceGroup |Get-AzVmDisk -DiskType DataDisk |fl
+	Get only DataDisks for all VM in a ResourceGroup.
 .NOTES
 	Author      :: Roman Gelman @rgelman75
-	Dependency  :: AzureRM PowerShell Module
+	Dependency  :: AzureRm PowerShell Module
 	Shell       :: Tested on PowerShell 5.0/5.1
 	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 31-Aug-2016 :: [Release] :: Publicly available
@@ -729,13 +781,13 @@ Function Expand-AzVmDisk
 .PARAMETER SizeGB
 	Specifies resultant disk size in GB.
 .EXAMPLE
-	PS C:\> Select-AzResourceGroup | Select-AzObject -ObjectType VM | Get-AzVmDisk | Expand-AzVmDisk 150
+	PS C:\> Select-AzResourceGroup | Select-AzObject -ObjectType VM | Get-AzVmDisk | Expand-AzVmDisk -SizeGB 150
 	Increase any disk, the VM deallocation will be required.
 .EXAMPLE
 	PS C:\> Select-AzResourceGroup | Select-AzObject VM | Get-AzVmDisk DataDisk | Expand-AzVmDisk 4095
 	Increase one or more DataDisks to a maximum allowed size.
 .EXAMPLE
-	PS C:\> Select-AzResourceGroup | Select-AzObject VM | Get-AzVmDisk OSDisk | Expand-AzVmDisk 2048
+	PS C:\> Select-AzResourceGroup | Select-AzObject VM | Get-AzVmDisk OSDisk | Expand-AzVmDisk 2048 -Verbose
 	Increase OSDisk to a maximum allowed size.
 .NOTES
 	Author      :: Roman Gelman @rgelman75
@@ -743,6 +795,7 @@ Function Expand-AzVmDisk
 	Shell       :: Tested on PowerShell 5.0/5.1
 	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 19-Oct-2017 :: [Release] :: Publicly available
+	Version 1.1 :: 12-Feb-2018 :: [Bugfix] :: PoweredOn VM deallocated in any case even while a DataDisk increase, [-Verbose] output supported
 .LINK
 	https://ps1code.com/2017/10/24/azure-vm-increase-disk
 #>
@@ -769,26 +822,48 @@ Function Expand-AzVmDisk
 		if ($Disk.DiskType -eq 'OSDisk' -and $SizeGB -gt 2048) { Throw "The maximum allowed size for OSDisks is 2048 GB!" }
 		
 		### Deallocate running VM ###
-		$PowerOn = $false
 		$VM = Get-AzureRmVM -Name $Disk.VM -ResourceGroupName $Disk.ResourceGroup
-		if (($VM | Get-AzVmPowerState).PowerState -ne 'Deallocated' -and $Disk.DiskType -eq 'OSDisk')
+		$PowerOn = if (($VM | Get-AzVmPowerState).PowerState -ne 'Deallocated') #-and $Disk.DiskType -eq 'OSDisk')
 		{
 			$resStop = $VM | Stop-AzureRmVM
-			if ($resStop.Status -ne 'Succeeded') { Throw $resStop.Error } else { $PowerOn = $true }
+			if ($resStop.Status -eq 'Succeeded')
+			{
+				Write-Verbose "The [$($Disk.VM)] VM has been deallocated successfully"
+				$true
+			}
+			else
+			{
+				Throw $resStop.Error
+				$false
+			}
+		}
+		else
+		{
+			$false
 		}
 		
-		if ($PSCmdlet.ShouldProcess("[$($Disk.VMSize)] VM [$($Disk.VM)]", "Increase $($Disk.DiskType) [$($Disk.DiskName)] to $($SizeGB)GB"))
+		if ($PSCmdlet.ShouldProcess("$($Disk.VMSize) VM [$($Disk.VM)]", "Increase $($Disk.DiskType) [$($Disk.DiskName)] from $($Disk.SizeGB) to $($SizeGB) GB"))
 		{
 			### Increase disk ###
 			if ($Disk.DiskType -eq 'OSDisk') { $VM.StorageProfile.OSDisk.DiskSizeGB = $SizeGB }
 			else { $VM.StorageProfile.DataDisks[$($Disk.Index)].DiskSizeGB = $SizeGB }
-			$resUpdate = $VM | Get-AzureRmVM | Update-AzureRmVM
+			
+			Try
+			{
+				$resUpdate = $VM | Update-AzureRmVM
+				Write-Verbose "The [$($Disk.VM)] VM config has been updated successfully"
+			}
+			Catch { Throw "Failed to update VM config" }
 			
 			### PowerOn VM if it was PoweredOn before ##
 			if ($resUpdate.IsSuccessStatusCode)
 			{
-				$VM | Get-AzVmDisk
-				if ($PowerOn) { $VM | Start-AzureRmVm | Out-Null }
+				Get-AzureRmVM -Name $Disk.VM -ResourceGroupName $Disk.ResourceGroup | Get-AzVmDisk
+				if ($PowerOn)
+				{
+					Write-Verbose "The [$($Disk.VM)] VM was started"
+					Get-AzureRmVM -Name $Disk.VM -ResourceGroupName $Disk.ResourceGroup | Start-AzureRmVm | Out-Null
+				}
 			}
 			else { $resUpdate.ReasonPhrase }
 		}
@@ -943,7 +1018,7 @@ Function Select-AzResourceGroup
 	Process
 	{
 		$DefaultProperty = 'ResourceGroupName'
-		return (menu -Menu (Get-AzureRmResourceGroup | sort $DefaultProperty) `
+		return (Write-Menu -Menu (Get-AzureRmResourceGroup | sort $DefaultProperty) `
 					 -PropertyToShow $DefaultProperty `
 					 -Header 'Available Resource Groups' `
 					 -Prompt 'Select Resource Group' `
@@ -957,6 +1032,58 @@ Function Select-AzResourceGroup
 	}
 	
 } #EndFunction Select-AzResourceGroup
+
+Function Select-AzLocation
+{
+	
+<#
+.SYNOPSIS
+	Interactively select Azure Location.
+.DESCRIPTION
+	This function allows interactively (from Menu list) to select Azure Location.
+.EXAMPLE
+	PS C:\> Select-AzLocation -NameOnly
+.EXAMPLE
+	PS C:\> Select-AzLocation | Get-AzureRmVMSize
+	Get all VMSizes available in the selected Azure Location.
+.NOTES
+	Author      :: Roman Gelman @rgelman75
+	Dependency  :: AzureRm PowerShell Module, Write-Menu function (part of this Module)
+	Shell       :: Tested on PowerShell 5.0
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 14-Feb-2018 :: [Release] :: Publicly available
+.LINK
+	https://ps1code.com/
+#>
+	
+	[CmdletBinding()]
+	[Alias("sazlo")]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[switch]$NameOnly
+	)
+	
+	Begin
+	{
+		$WarningPreference = 'SilentlyContinue'
+	}
+	Process
+	{
+		$DisplayProperty = 'DisplayName'
+		$NameProperty = 'Location'
+		
+		$AzObject = Write-Menu -Menu (Get-AzureRmLocation | sort $DisplayProperty) `
+					 -PropertyToShow $DisplayProperty `
+					 -Header 'Available Locations' `
+					 -Prompt 'Select Location' `
+					 -HeaderColor 'Yellow' -TextColor 'White' -Shift 1
+	}
+	End
+	{
+		if ($NameOnly) { $AzObject.$NameProperty } else { $AzObject }
+	}
+	
+} #EndFunction Select-AzLocation
 
 Function Select-AzSubscription
 {
@@ -997,7 +1124,7 @@ Function Select-AzSubscription
 	Process
 	{
 		$DefaultProperty = 'Name'
-		$SubscriptionName = (menu -Menu (Get-AzureRmSubscription | sort $DefaultProperty) `
+		$SubscriptionName = (Write-Menu -Menu (Get-AzureRmSubscription | sort $DefaultProperty) `
 					 -PropertyToShow $DefaultProperty `
 					 -Header 'Available Subscriptions' `
 					 -Prompt 'Select Subscription' `
@@ -1031,27 +1158,28 @@ Function Select-AzObject
 .EXAMPLE
 	PS C:\> Select-AzObject StorageAccount
 .EXAMPLE
-	PS C:\> Select-AzResourceGroup |Select-AzObject -ObjectType AS -NameOnly
+	PS C:\> Select-AzResourceGroup | Select-AzObject -ObjectType AS -NameOnly
 .EXAMPLE
 	PS C:\> Select-AzObject -ObjectType VirtualNetwork -ResourceGroup (Select-AzResourceGroup) -NameOnly -Verbose
 .EXAMPLE
-	PS C:\> Select-AzObject -ObjectType VM |Get-AzVmDisk
+	PS C:\> Select-AzObject -ObjectType VM | Get-AzVmDisk
 .EXAMPLE
-	PS C:\> Select-AzObject VNET |select -expand DhcpOptions
+	PS C:\> Select-AzObject VNET | select -expand DhcpOptions
 .EXAMPLE
-	PS C:\> Select-AzObject VM |Start-AzureRmVM
+	PS C:\> Select-AzObject VM -Filter testvm* | Start-AzureRmVM
 .NOTES
 	Author      :: Roman Gelman @rgelman75
-	Dependency  :: AzureRM PowerShell Module, Write-Menu function (part of this Module)
+	Dependency  :: AzureRm PowerShell Module, Write-Menu function (part of this Module)
 	Shell       :: Tested on PowerShell 5.1
-	Platform    :: Tested on AzureRm v.3.7.0
+	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 26-Jun-2017 :: [Release] :: Publicly available
+	Version 1.1 :: 08-Feb-2018 :: [Change] :: Added [Select-AzItem] alias, verbose output [-Verbose] and [-Filter] parameter
 .LINK
-	https://ps1code.com/2017/06/29/azure-vm-tags
+	https://ps1code.com/2018/02/14/azure-vhd-operations-powershell
 #>
 	
 	[CmdletBinding()]
-	[Alias("sazob")]
+	[Alias("Select-AzItem", "sazob")]
 	Param (
 		[Parameter(Mandatory = $false, ValueFromPipeline, ValueFromPipelineByPropertyName)]
 		[ValidateNotNullOrEmpty()]
@@ -1064,6 +1192,11 @@ Function Select-AzObject
 		 ,
 		[Parameter(Mandatory = $false)]
 		[switch]$NameOnly
+		 ,
+		[Parameter(Mandatory = $false, Position = 2)]
+		[SupportsWildcards()]
+		[ValidateNotNullOrEmpty()]
+		[string]$Filter
 	)
 	
 	Begin
@@ -1096,7 +1229,7 @@ Function Select-AzObject
 			{ 'AvailabilitySet', 'AS' -contains $_ }
 			{
 				'Get-AzureRmAvailabilitySet'
-				if (!$PSBoundParameters.ContainsKey('ResourceGroup')) {Throw "You have to specify ResourceGroup name"}
+				if (!$PSBoundParameters.ContainsKey('ResourceGroup')) { Throw "You have to specify ResourceGroup name" }
 			}
 		}
 		
@@ -1110,14 +1243,19 @@ Function Select-AzObject
 		{
 			&$AzureRmFunction
 		}
+		
+		### Shorten the menu by -Filter ###
+		$Menu = if ($PSBoundParameters.ContainsKey('Filter')) { $Menu | ? { $_.$DefaultProperty -like $Filter } } else { $Menu }
+		
 		### Show menu ###
 		$AzObject = if ($Menu)
 		{
-			menu -Menu ($Menu | sort $DefaultProperty) `
+			Write-Menu -Menu ($Menu | sort $DefaultProperty) `
 				 -PropertyToShow $DefaultProperty `
 				 -Header $menuHeader `
 				 -Prompt "Select $ObjectType" `
 				 -HeaderColor $menuHeaderC -TextColor $menuTextC -Shift $menuShift
+			Write-Verbose "$FunctionName - A $ObjectType object selected"
 		}
 		else
 		{
@@ -1164,7 +1302,7 @@ Function Get-AzSubnet
 	Expand BusyIP property for particular subnet.
 .NOTES
 	Author      :: Roman Gelman @rgelman75
-	Dependency  :: AzureRM PowerShell Module
+	Dependency  :: AzureRm PowerShell Module
 	Shell       :: Tested on PowerShell 5.0/5.1
 	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 26-Jun-2017 :: [Release] :: Publicly available
@@ -1222,57 +1360,380 @@ Function Get-AzSubnet
 	
 } #EndFunction Get-AzSubnet
 
-Function Select-AzLocation
+Function Select-AzChildObject
 {
 	
 <#
 .SYNOPSIS
-	Interactively select Azure Location.
+	Interactively select an Azure child object.
 .DESCRIPTION
-	This function allows interactively (from Menu list) to select Azure Location.
+	This function allows interactively (from Menu list) select
+	single child object, related to particular object type.
+.PARAMETER ParentObject
+	Specifies Parent object to retrieve any its childs.
+.PARAMETER CustomOutput
+	If specified, the original Microsoft object will be changed to more reliable custom object.
 .EXAMPLE
-	PS C:\> Select-AzLocation -NameOnly
+	PS C:\> $azObject = Select-AzObject StorageAccount | Select-AzChildObject
+	Select any Storage Account's child object and save it to a variable.
 .EXAMPLE
-	PS C:\> Select-AzLocation | Get-AzureRmVMSize
-	Get all VMSizes available in the selected Azure Location.
+	PS C:\> Select-AzObject SA | Select-AzChildObject -CustomOutput -Verbose
+.EXAMPLE
+	PS C:\> Select-AzObject SA | Select-AzChildObject | Select-AzChildObject
+	Choice 'Blob Container' first and then 'Blob' to retrieve Blobs from a single Container to improve query's performance.
+.EXAMPLE
+	PS C:\> Select-AzObject VM | Select-AzChildObject
+.EXAMPLE
+	PS C:\> Select-AzObject SA | Select-AzChildObject -Filter *.vhd
+	Shorten menu list by filtering out VHD blobs only.
 .NOTES
 	Author      :: Roman Gelman @rgelman75
+	Requirement :: PowerShell 4.0
 	Dependency  :: AzureRm PowerShell Module, Write-Menu function (part of this Module)
 	Shell       :: Tested on PowerShell 5.0
 	Platform    :: Tested on AzureRm 4.3.1
-	Version 1.0 :: 28-Jan-2018 :: [Release] :: Publicly available
+	Version 1.0 :: 14-Feb-2018 :: [Release] :: Publicly available
 .LINK
-	https://ps1code.com/
+	https://ps1code.com/2018/02/14/azure-vhd-operations-powershell
 #>
 	
 	[CmdletBinding()]
-	[Alias("sazlo")]
+	[Alias("sazco", "Select-AzChildItem", "sazci")]
 	Param (
+		[Parameter(Mandatory, ValueFromPipeline)]
+		$ParentObject
+		 ,
 		[Parameter(Mandatory = $false)]
-		[switch]$NameOnly
+		[switch]$CustomOutput
+		 ,
+		[Parameter(Mandatory = $false, Position = 1)]
+		[SupportsWildcards()]
+		[ValidateNotNullOrEmpty()]
+		[string]$Filter
 	)
 	
 	Begin
 	{
 		$WarningPreference = 'SilentlyContinue'
+		$DefaultProperty = 'Name'
+		$FunctionName = '{0}' -f $MyInvocation.MyCommand
+		$menuHeaderC = 'Yellow'
+		$menuTextC = 'White'
+		$menuShift = 1
 	}
 	Process
 	{
-		$DisplayProperty = 'DisplayName'
-		$NameProperty = 'Location'
+		### Get supported child object type(s) ###
+		$ChildObjectTypes = switch ($ParentObject)
+		{
+			### PARENT :: [Storage Account] ###
+			{ $_ -is [Microsoft.Azure.Commands.Management.Storage.Models.PSStorageAccount] }
+			{
+				@('Storage Context', 'Blob', 'Blob Container', 'Share', 'File', 'Table', 'Queue')
+				Break
+			}
+			### PARENT :: [Container] ###
+			{ $_ -is [Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel.AzureStorageContainer] }
+			{
+				'Single Container Blob'
+				Break
+			}
+			### PARENT :: [VM] ###
+			{ $_ -is [Microsoft.Azure.Commands.Compute.Models.PSVirtualMachineList] }
+			{
+				'Vnic'
+			}
+			### PARENT :: NOT SUPPORTED ###
+			Default { Throw "Not supported Parent Object type" }
+		}
 		
-		$AzObject = menu -Menu (Get-AzureRmLocation | sort $DisplayProperty) `
-					 -PropertyToShow $DisplayProperty `
-					 -Header 'Available Locations' `
-					 -Prompt 'Select Location' `
-					 -HeaderColor 'Yellow' -TextColor 'White' -Shift 1
+		### Select child object type ###
+		if ($ChildObjectTypes.Count -gt 1)
+		{
+			$ChildObjectType = Write-Menu -Menu $ChildObjectTypes `
+									-Header 'Child Objects' `
+									-Prompt "Select Object Type" `
+									-HeaderColor $menuHeaderC -TextColor $menuTextC -Shift $menuShift
+		}
+		else { $ChildObjectType = $ChildObjectTypes }
+
+		### Build menu ###
+		$Menu = switch -exact ($ChildObjectType)
+		{
+			'Blob' { ($ParentObject | Get-AzureStorageContainer | Get-AzureStorageBlob).Where{ $_.Name -notmatch '{|}' }; Break }
+			'Single Container Blob' { ($ParentObject | Get-AzureStorageBlob).Where{ $_.Name -notmatch '{|}' }; Break }
+			'Blob Container' { $ParentObject | Get-AzureStorageContainer; Break }
+			'Storage Context' {
+				Get-AzureRmStorageAccountKey -ResourceGroupName $ParentObject.ResourceGroupName -Name $ParentObject.StorageAccountName
+				$DefaultProperty = 'KeyName'
+				Break
+			}
+			'Share' { $ParentObject | Get-AzureStorageShare; Break }
+			'File' { $ParentObject | Get-AzureStorageShare | Get-AzureStorageFile; Break }
+			'Table' { $ParentObject | Get-AzureStorageTable; Break }
+			'Queue' { $ParentObject | Get-AzureStorageQueue; Break }
+			'Vnic' { Get-AzureRmNetworkInterface | ? { $ParentObject.NetworkProfile.NetworkInterfaces.Id -contains $_.Id }; Break }
+		}
+		### Truncate the menu by -Filter ###
+		$Menu = if ($PSBoundParameters.ContainsKey('Filter')) { $Menu | ? { $_.$DefaultProperty -like $Filter } } else { $Menu }
+		
+		### Show menu ###
+		$AzObject = if ($Menu)
+		{
+			Write-Menu -Menu ($Menu | sort $DefaultProperty) `
+				 -PropertyToShow $DefaultProperty `
+				 -Header "Available $($ChildObjectType)s" `
+				 -Prompt "Select $ChildObjectType" `
+				 -HeaderColor $menuHeaderC -TextColor $menuTextC -Shift $menuShift
+			Write-Verbose "$FunctionName - A $($ChildObjectType) object selected"
+		}
+		else
+		{
+			$null
+			Write-Verbose "$FunctionName - No $($ChildObjectType) objects found!"
+		}
+		
+		### Output ###
+		if ($CustomOutput)
+		{
+			switch -exact ($ChildObjectType)
+			{
+				'Blob' {
+					$AccessKeys = Get-AzureRmStorageAccountKey -ResourceGroupName $ParentObject.ResourceGroupName -StorageAccountName $ParentObject.StorageAccountName -ErrorAction Stop
+					[AzBlob] @{
+						ResourceGroup = $ParentObject.ResourceGroupName
+						ParentStorageAccount = $ParentObject.StorageAccountName
+						AccessKey = $AccessKeys[0].Value
+						Location = $ParentObject.Location
+						BlobName = $AzObject.Name
+						BlobUri = $AzObject.ICloudBlob.Uri
+						SizeGB = [Math]::Truncate($AzObject.Length/1GB)
+						Modified = $AzObject.LastModified.ToLocalTime()
+						LeaseStatus = [string]$AzObject.ICloudBlob.Properties.LeaseStatus
+						LeaseState = [string]$AzObject.ICloudBlob.Properties.LeaseState
+						ContainerName = $AzObject.ICloudBlob.Container.Name
+						ContainerUri = $AzObject.ICloudBlob.Container.Uri
+					}
+					Break
+				}
+				'Single Container Blob' {
+					$AccessKeys = Get-AzureRmStorageAccountKey -ResourceGroupName $ParentObject.ResourceGroupName -StorageAccountName $ParentObject.StorageAccountName -ErrorAction Stop
+					$SA = (Get-AzureRmStorageAccount -ErrorAction Stop).Where{ $_.StorageAccountName -eq $AzObject.Context.StorageAccountName }
+					[AzBlob] @{
+						ResourceGroup = $SA.ResourceGroupName
+						ParentStorageAccount = $AzObject.Context.StorageAccountName
+						AccessKey = $AccessKeys[0].Value
+						Location = $SA.Location
+						BlobName = $AzObject.Name
+						BlobUri = $AzObject.ICloudBlob.Uri
+						SizeGB = [Math]::Truncate($AzObject.Length/1GB)
+						Modified = $AzObject.LastModified.ToLocalTime()
+						LeaseStatus = [string]$AzObject.ICloudBlob.Properties.LeaseStatus
+						LeaseState = [string]$AzObject.ICloudBlob.Properties.LeaseState
+						ContainerName = $AzObject.ICloudBlob.Container.Name
+						ContainerUri = $AzObject.ICloudBlob.Container.Uri
+					}
+					Break
+				}
+				'Blob Container' {
+					$AccessKeys = Get-AzureRmStorageAccountKey -ResourceGroupName $ParentObject.ResourceGroupName -StorageAccountName $ParentObject.StorageAccountName -ErrorAction Stop
+					[AzBlobContainer] @{
+						ResourceGroup = $ParentObject.ResourceGroupName
+						ParentStorageAccount = $ParentObject.StorageAccountName
+						AccessKey = $AccessKeys[0].Value
+						Location = $ParentObject.Location
+						ContainerName = $AzObject.Name
+						ContainerUri = $AzObject.CloudBlobContainer.Uri
+						PublicAccess = [string]$AzObject.PublicAccess
+						Modified = $AzObject.LastModified.ToLocalTime()
+						LeaseStatus = [string]$AzObject.CloudBlobContainer.Properties.LeaseStatus
+						LeaseState = [string]$AzObject.CloudBlobContainer.Properties.LeaseState
+					}	
+					Break
+				}
+				'Storage Context' {
+					New-AzureStorageContext -StorageAccountName $ParentObject.StorageAccountName -StorageAccountKey $AzObject.Value
+					Break
+				}
+				'Share' {
+					[pscustomobject] @{
+						ResourceGroup = $ParentObject.ResourceGroupName
+						ParentStorageAccount = $ParentObject.StorageAccountName
+						Location = $ParentObject.Location
+						ShareName = $AzObject.Name
+						Host = $AzObject.Uri.Host
+						Uri = [uri]$AzObject.Uri.OriginalString
+						IsReadOnly = $AzObject.Metadata.IsReadOnly
+						Modified = $AzObject.Properties.LastModified.ToLocalTime()
+						QuotaTB = [Math]::Round($AzObject.Properties.Quota/1024, 0)
+					}
+					Break
+				}
+				'File' {
+					$Modified = Try { $AzObject.Properties.LastModified.ToLocalTime() } Catch { $null }
+					[pscustomobject] @{
+						ResourceGroup = $ParentObject.ResourceGroupName
+						ParentStorageAccount = $ParentObject.StorageAccountName
+						Location = $ParentObject.Location
+						FileName = $AzObject.Name
+						ShareName = $AzObject.Share.Name
+						ShareUri = $AzObject.Share.Uri
+						SizeMB = [Math]::Round($AzObject.Properties.Length/1MB, 2)
+						IsReadOnly = $AzObject.Metadata.IsReadOnly
+						Modified = $Modified
+					}
+					Break
+				}
+				'Table' {
+					[pscustomobject] @{
+						ResourceGroup = $ParentObject.ResourceGroupName
+						ParentStorageAccount = $ParentObject.StorageAccountName
+						Location = $ParentObject.Location
+						TableName = $AzObject.Name
+						TableUri = $AzObject.Uri.OriginalString
+						IsReadOnly = $AzObject.Context.ExtendedProperties.IsReadOnly
+					}
+					Break
+				}
+				'Queue' {
+					[pscustomobject] @{
+						ResourceGroup = $ParentObject.ResourceGroupName
+						ParentStorageAccount = $ParentObject.StorageAccountName
+						Location = $ParentObject.Location
+						QueueName = $AzObject.Name
+						QueueUri = $AzObject.Uri.OriginalString
+						IsReadOnly = $AzObject.Context.ExtendedProperties.IsReadOnly
+					}
+					Break
+				}
+				'Vnic' {
+					$IpConfigs = $AzObject.IpConfigurations | % { if ($_.PrivateIpAddressVersion -eq 'ipv4') { $_ } }
+					[pscustomobject] @{
+						ResourceGroup = $AzObject.ResourceGroupName
+						ParentVm = $ParentObject.Name
+						Location = $AzObject.Location
+						VnicName = $AzObject.Name
+						PrivateIPv4 = $IpConfigs.PrivateIpAddress
+						PublicIPv4 = $IpConfigs.PublicIpAddress.IpAddress
+						MAC = $AzObject.MacAddress
+						Subnet = $AzObject.IpConfigurations | % { [regex]::Match($_.Subnet.Id, '.+/(.+)$').Groups[1].Value }
+					}
+					Break
+				}
+			}
+		}
+		else { $AzObject }
 	}
-	End
-	{
-		if ($NameOnly) { $AzObject.$NameProperty } else { $AzObject }
-	}
+	End { }
 	
-} #EndFunction Select-AzLocation
+} #EndFunction Select-AzChildObject
+
+Function Copy-AzBlob
+{
+	
+<#
+.SYNOPSIS
+	Copy Azure blobs.
+.DESCRIPTION
+	This function copies or moves Azure blobs (*.VHD or any other files) to another location.
+	The location may be either another blob container or container in different Storage Account.
+.PARAMETER Blob
+	Specifies Azure blob (aka source file).
+.PARAMETER Container
+	Specifies Azure container (aka destination folder).
+.PARAMETER NewName
+	If specified, the blob will be renamed at the destination.
+	If the new name does not include a file extension, it will be inherited from the source blob.
+.PARAMETER Move
+	If specified, the blob will be deleted at the source location after successful copy.
+.EXAMPLE
+	PS C:\> Select-AzObject StorageAccount | Select-AzChildObject -CustomOutput | Copy-AzBlob -Container (Select-AzObject StorageAccount | Select-AzChildObject -CustomOutput)
+.EXAMPLE
+	PS C:\> Select-AzObject SA | Select-AzChildObject -CustomOutput -Verbose | Copy-AzBlob -Container (Select-AzObject SA | Select-AzChildObject -CustomOutput -Verbose) -NewName vm1_osdisk.vhd -Move
+.NOTES
+	Author      :: Roman Gelman @rgelman75
+	Dependency  :: AzureRm PowerShell Module, Select-AzChildObject function (part of this Module)
+	Shell       :: Tested on PowerShell 5.0
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 14-Feb-2018 :: [Release] :: Publicly available
+.LINK
+	https://ps1code.com/2018/02/14/azure-vhd-operations-powershell
+#>
+	
+	[CmdletBinding(ConfirmImpact = 'High', SupportsShouldProcess)]
+	[Alias("Copy-AzVhd", "cpblob")]
+	[OutputType([AzBlob])]
+	Param (
+		[Parameter(Mandatory, ValueFromPipeline)]
+		[AzBlob]$Blob
+		 ,
+		[Parameter(Mandatory, Position = 0)]
+		[Alias("Destination")]
+		[AzBlobContainer]$Container
+		 ,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[string]$NewName
+		 ,
+		[Parameter(Mandatory = $false)]
+		[switch]$Move
+	)
+	
+	Begin
+	{
+		$ErrorActionPreference = 'Stop'
+		$WarningPreference = 'SilentlyContinue'
+		$FunctionName = '{0}' -f $MyInvocation.MyCommand
+		$Action = if ($Move) { 'Move' } else { 'Copy' }
+	}
+	Process
+	{
+		$NewBlobName = if ($PSBoundParameters.ContainsKey('NewName'))
+		{
+			if ($NewName -notmatch '\.') { "$NewName$([regex]::Match($($Blob.BlobName), '\.\w+$').Value)" }
+			else { $NewName }
+			$Action += ' and rename'
+		}
+		else { $Blob.BlobName }
+		
+		if ($PSCmdlet.ShouldProcess("Storage Account [$($Blob.ParentStorageAccount)]", "$Action blob [$($Blob.BlobName)] to the container [$($Container.ContainerUri)]"))
+		{
+			$srcContext = New-AzureStorageContext -StorageAccountName $Blob.ParentStorageAccount -StorageAccountKey $Blob.AccessKey
+			$dstContext = New-AzureStorageContext -StorageAccountName $Container.ParentStorageAccount -StorageAccountKey $Container.AccessKey
+			
+			$outCopy = Start-AzureStorageBlobCopy -SrcContainer $Blob.ContainerName `
+									   -DestContainer $Container.ContainerName `
+									   -SrcBlob $Blob.BlobName `
+									   -DestBlob $NewBlobName `
+									   -Context $srcContext `
+									   -DestContext $dstContext
+			if ($?)
+			{
+				[AzBlob] @{
+					ResourceGroup = $Container.ResourceGroup
+					ParentStorageAccount = $Container.ParentStorageAccount
+					AccessKey = $Container.AccessKey
+					Location = $Container.Location
+					BlobName = $NewBlobName
+					BlobUri = [uri]"$($Container.ContainerUri)/$NewBlobName"
+					SizeGB = $Blob.SizeGB
+					Modified = $outCopy.LastModified.ToLocalTime()
+					LeaseStatus = 'Unlocked'
+					LeaseState = 'Available'
+					ContainerName = $Container.ContainerName
+					ContainerUri = $Container.ContainerUri
+				}
+				if ($Move)
+				{
+					if ($Blob.LeaseState -eq 'leased') { Write-Error "$FunctionName - The source blob is leased and cannot be removed, please break the lease and remove it manually" }
+					else { Remove-AzureStorageBlob -Container $Blob.ContainerName -Context $srcContext -Blob $Blob.BlobName | Out-Null }
+				}
+			}
+		}
+	}
+	End { }
+	
+} #EndFunction Copy-AzBlob
 
 Function New-AzParamsJson
 {
@@ -1378,3 +1839,107 @@ Function New-AzParamsJson
 	End { }
 	
 } #EndFunction New-AzParamsJson
+
+Function Remove-AzObject
+{
+	
+<#
+.SYNOPSIS
+	Interactively delete Azure object.
+.DESCRIPTION
+	This function allows interactively (from Menu list) to select and delete an Azure item.
+.EXAMPLE
+	PS C:\> Select-AzObject VM | Select-AzChildObject | Remove-AzObject
+	Delete selected VM NIC.
+.EXAMPLE
+	PS C:\> Select-AzObject SA | Select-AzChildObject | Remove-AzObject -Confirm:$false -Verbose
+	Delete selected blob or container with no confirmation.
+.NOTES
+	Author      :: Roman Gelman @rgelman75
+	Dependency  :: AzureRm PowerShell Module
+	Shell       :: Tested on PowerShell 5.0
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 14-Feb-2018 :: [Release] :: Publicly available
+.LINK
+	https://ps1code.com/2018/02/14/azure-vhd-operations-powershell
+#>
+	
+	[CmdletBinding(ConfirmImpact = 'High', SupportsShouldProcess)]
+	[OutputType([bool])]
+	[Alias("Remove-AzItem", "xazob")]
+	Param (
+		[Parameter(Mandatory, ValueFromPipeline)]
+		[Alias("AzureItem")]
+		$AzureObject
+	)
+	
+	Begin
+	{
+		$WarningPreference = 'SilentlyContinue'
+		$FunctionName = '{0}' -f $MyInvocation.MyCommand
+	}
+	Process
+	{
+		switch ($AzureObject)
+		{
+			### CONTAINER ###
+			{ $_ -is [Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel.AzureStorageContainer] }
+			{
+				$ObjectType = 'Blob Container'
+				if ($_.CloudBlobContainer.Properties.LeaseStatus -eq 'Unlocked')
+				{
+					if ($PSCmdlet.ShouldProcess("Storage Account [$($_.Context.StorageAccountName)]", "Delete $ObjectType [$($_.Name)] and all its child blobs"))
+					{
+						$_.CloudBlobContainer.Delete()
+						if ($?) { Write-Verbose "$FunctionName - The $ObjectType [$($_.Name)] deleted successfully"; $true } else { $false }
+					}
+				}
+				else
+				{
+					Write-Error "The $ObjectType [$($AzureObject.Name)] is [$($AzureObject.CloudBlobContainer.Properties.LeaseState)] therefore it cannot be deleted"
+				}
+				Break
+			}
+			### BLOB ###
+			{ $_ -is [Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel.AzureStorageBlob] }
+			{
+				$ObjectType = 'Blob'
+				if ($_.ICloudBlob.Properties.LeaseStatus -eq 'Unlocked')
+				{
+					if ($PSCmdlet.ShouldProcess("Storage Account [$($_.Context.StorageAccountName)]", "Delete $ObjectType [$($_.Name)]"))
+					{
+						$_.ICloudBlob.Delete()
+						if ($?) { Write-Verbose "$FunctionName - The $ObjectType [$($_.Name)] deleted successfully"; $true } else { $false }
+					}
+				}
+				else
+				{
+					Write-Error "The $ObjectType [$($_.Name)] is [$($_.ICloudBlob.Properties.LeaseState)] therefore it cannot be deleted"
+				}
+				Break
+			}
+			### VIRTUAL NIC ###
+			{ $_ -is [Microsoft.Azure.Commands.Network.Models.PSNetworkInterface] }
+			{
+				$ObjectType = 'VM NIC'
+				if ($_.VirtualMachine.Id -eq $null)
+				{
+					if ($PSCmdlet.ShouldProcess("Resource Group [$($_.ResourceGroupName)]", "Delete $ObjectType [$($_.Name)]"))
+					{
+						$_ | Remove-AzureRmNetworkInterface -Confirm:$false -Force
+						if ($?) { Write-Verbose "$FunctionName - The $ObjectType [$($_.Name)] deleted successfully"; $true } else { $false }
+					}
+				}
+				else
+				{
+					$ParentVm = [regex]::Match($_.VirtualMachine.Id, '.+/(.+)$').Groups[1].Value
+					Write-Error "The $ObjectType [$($_.Name)] is linked to VM [$ParentVm] therefore it cannot be deleted"
+				}
+			}
+			### UNSUPPORTED ###
+			Default { Throw "Not supported object type" }
+		}
+	}
+	End { }
+	
+} #EndFunction Remove-AzObject
