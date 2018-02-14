@@ -43,16 +43,20 @@ To start using the module functions:
 |1|<b>Select-AzSubscription</b>|Interactively select Azure Subscription|
 |2|[<b>Select-AzResourceGroup</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Interactively select Azure ResourceGroup name|
 |3|<b>Select-AzLocation</b>|Interactively select Azure Location|
-|4|[<b>Select-AzObject</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Interactively select an Azure object (`VM`, `StorageAccount`, `VNET`, `AvailabilitySet`)|
-|5|[<b>New-AzCredProfile</b>](https://ps1code.com/2017/07/05/login-to-azure-automatically)|Set your PowerShell session to automatically login to the Azure|
-|6|[<b>Get-AzOrphanedVhd</b>](https://ps1code.com/2017/07/05/azure-orphaned-vhd)|Find Azure orphaned `*.VHD` files|
-|7|[<b>Get-AzSubnet</b>](https://ps1code.com/2017/10/30/azure-ipam-powershell)|Get busy IP in Azure Subnets|
-|8|<b>Get-AzVmPowerState</b>|Get Azure VM Power State|
-|9|[<b>Get-AzVmTag / Add-AzVmTag</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Get/Add/Set Azure VM Resource Tag(s)|
-|10|[<b>Get-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Get Azure VM Virtual Disks (`OSDisk`, `DataDisk`, `All`)|
-|11|[<b>New-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Add a new `DataDisk` to an Azure VM|
-|12|[<b>Expand-AzVmDisk</b>](https://ps1code.com/2017/10/24/azure-vm-increase-disk)|Increase Azure VM disks|
-|13|[<b>New-AzParamsJson</b>](https://ps1code.com/2018/02/01/azure-json-parameter-files)|Create Azure JSON parameter files|
+|4|[<b>Select-AzObject</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Interactively select an Azure object (`VM`, `StorageAccount`, `VNET`, `AvailabilitySet`)|
+|5|[<b>Select-AzChildObject</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Interactively select an Azure child object (Supports pipeline from the `Select-AzObject` function)|
+|6|[<b>New-AzCredProfile</b>](https://ps1code.com/2017/07/05/login-to-azure-automatically)|Set your PowerShell session to automatically login to the Azure|
+|7|[<b>Get-AzOrphanedVhd</b>](https://ps1code.com/2017/07/05/azure-orphaned-vhd)|Find Azure orphaned `*.VHD` files|
+|8|[<b>Get-AzSubnet</b>](https://ps1code.com/2017/10/30/azure-ipam-powershell)|Get busy IP in Azure Subnets|
+|9|<b>Get-AzVmPowerState</b>|Get Azure VM Power State|
+|10|[<b>Get-AzVmTag / Add-AzVmTag</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Get/Add/Set Azure VM Resource Tag(s)|
+|11|[<b>Get-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Get Azure VM Virtual Disks (`OSDisk`, `DataDisk`, `All`)|
+|12|[<b>New-AzVmDisk</b>](https://ps1code.com/2017/07/05/azure-vm-add-data-disk)|Add a new `DataDisk` to an Azure VM|
+|13|[<b>Expand-AzVmDisk</b>](https://ps1code.com/2017/10/24/azure-vm-increase-disk)|Increase Azure VM disks|
+|14|[<b>New-AzParamsJson</b>](https://ps1code.com/2018/02/01/azure-json-parameter-files)|Create Azure JSON parameter files|
+|15|[<b>Copy-AzBlob</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Copy/Move/Rename blobs|
+|16|[<b>Remove-AzObject</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Delete an Azure object (Supports pipeline from the `Select-AzChildObject` function)|
+
 
 ##
 Stay tuned for the updates!
