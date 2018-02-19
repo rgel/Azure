@@ -42,7 +42,7 @@ To start using the module functions:
 |----|----|----|
 |1|<b>Select-AzSubscription</b>|Interactively select Azure Subscription|
 |2|[<b>Select-AzResourceGroup</b>](https://ps1code.com/2017/06/29/azure-vm-tags)|Interactively select Azure ResourceGroup name|
-|3|<b>Select-AzLocation</b>|Interactively select Azure Location|
+|3|[<b>Select-AzLocation</b>](https://ps1code.com/2018/02/19/azure-vm-size-powershell)|Interactively select Azure Location|
 |4|[<b>Select-AzObject</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Interactively select an Azure object (`VM`, `StorageAccount`, `VNET`, `AvailabilitySet`)|
 |5|[<b>Select-AzChildObject</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Interactively select an Azure child object (Supports pipeline from the `Select-AzObject` function)|
 |6|[<b>New-AzCredProfile</b>](https://ps1code.com/2017/07/05/login-to-azure-automatically)|Set your PowerShell session to automatically login to the Azure|
@@ -56,7 +56,7 @@ To start using the module functions:
 |14|[<b>New-AzParamsJson</b>](https://ps1code.com/2018/02/01/azure-json-parameter-files)|Create Azure JSON parameter files|
 |15|[<b>Copy-AzBlob</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Copy/Move/Rename blobs|
 |16|[<b>Remove-AzObject</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Delete an Azure object (Supports pipeline from the `Select-AzChildObject` function)|
-
+|17|[<b>Get-AzVmSize</b>](https://ps1code.com/2018/02/19/azure-vm-size-powershell)|Select right Azure VM Size|
 
 ##
 Stay tuned for the updates!
