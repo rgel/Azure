@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Configuration>
 	<ViewDefinitions>
+    <!-- ***********
+    Az-Module_AzDisk
+    **************** -->
 		<View>
 			<Name>Az-Module_AzDisk</Name>
 			<ViewSelectedBy><TypeName>AzDisk</TypeName></ViewSelectedBy>
@@ -29,5 +32,37 @@
 				</TableRowEntries>
 			</TableControl>
 		</View>
+    <!-- *************
+    Az-Module_AzVmSize
+    ****************** -->  
+ 		<View>
+			<Name>Az-Module_AzVmSize</Name>
+			<ViewSelectedBy><TypeName>AzVmSize</TypeName></ViewSelectedBy>
+			<TableControl>
+        <TableHeaders>
+          <TableColumnHeader><Label>Location</Label><Width>20</Width><Alignment>Left</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>VMSize</Label><Width>22</Width><Alignment>Left</Alignment></TableColumnHeader>
+					<TableColumnHeader><Label>Cores</Label><Width>5</Width><Alignment>Right</Alignment></TableColumnHeader>
+					<TableColumnHeader><Label>MemoryGiB</Label><Width>9</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>DataDisks</Label><Width>9</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Type</Label><Width>10</Width><Alignment>Left</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Family</Label><Width>6</Width><Alignment>Left</Alignment></TableColumnHeader>
+				</TableHeaders>
+				<TableRowEntries>
+					<TableRowEntry>
+						<TableColumnItems>
+							<TableColumnItem><PropertyName>Location</PropertyName></TableColumnItem>
+							<TableColumnItem><PropertyName>VMSize</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Cores</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>MemoryGiB</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>DataDisks</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Type</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>Family</PropertyName></TableColumnItem>
+						</TableColumnItems>
+					</TableRowEntry>
+				</TableRowEntries>
+			</TableControl>
+		</View>
+  
 	</ViewDefinitions>
 </Configuration>
