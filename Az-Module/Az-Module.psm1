@@ -1,7 +1,7 @@
 Class AzModule
 {
 	
-}
+} #EndClass AzModule
 
 Class AzDisk : AzModule
 {
@@ -24,8 +24,8 @@ Class AzDisk : AzModule
 	[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine] GetParentVM ()
 	{
 		return Get-AzureRmVM -ResourceGroupName $this.ResourceGroup -Name $this.VM -WarningAction SilentlyContinue
-	}
-}
+	}	
+} #EndClass AzDisk
 
 Class AzBlob : AzModule
 {
@@ -48,7 +48,7 @@ Class AzBlob : AzModule
 	{
 		return Get-AzureRmStorageAccount -ResourceGroupName $this.ResourceGroup -Name $this.ParentStorageAccount -WarningAction SilentlyContinue
 	}
-}
+} #EndClass AzBlob
 
 Class AzBlobContainer : AzModule
 {
@@ -69,7 +69,25 @@ Class AzBlobContainer : AzModule
 	{
 		return Get-AzureRmStorageAccount -ResourceGroupName $this.ResourceGroup -Name $this.ParentStorageAccount -WarningAction SilentlyContinue
 	}
-}
+} #EndClass AzBlobContainer
+
+Class AzVmSize: AzModule
+{
+	[ValidateNotNullOrEmpty()][string]$Location
+	[ValidateNotNullOrEmpty()][string]$VMSize
+	[ValidateNotNullOrEmpty()][int]$Cores
+	[ValidateNotNullOrEmpty()][decimal]$MemoryGiB
+	[ValidateNotNullOrEmpty()][decimal]$OSDiskGiB
+	[ValidateNotNullOrEmpty()][int]$DataDisks
+	[ValidateNotNullOrEmpty()][string]$Type
+	[ValidateNotNullOrEmpty()][string]$Family
+	[ValidateNotNullOrEmpty()][string]$Series
+	[ValidateNotNullOrEmpty()][string]$Number
+	[string]$SubSeries
+	[string]$Version
+	
+	[string] ToString () { return $this.VMSize }
+} #EndClass AzVmSize
 
 Function Get-AzVmPowerState
 {
@@ -1041,8 +1059,16 @@ Function Select-AzLocation
 	Interactively select Azure Location.
 .DESCRIPTION
 	This function allows interactively (from Menu list) to select Azure Location.
+.PARAMETER Region
+	If specified, the locations list will be filtered out by particular Azure region.
+.PARAMETER NameOnly
+	If specified, the object name only returned insted of the whole object.
 .EXAMPLE
-	PS C:\> Select-AzLocation -NameOnly
+	PS C:\> Select-AzLocation
+.EXAMPLE
+	PS C:\> Select-AzLocation -Region US
+.EXAMPLE
+	PS C:\> Select-AzLocation Asia -NameOnly
 .EXAMPLE
 	PS C:\> Select-AzLocation | Get-AzureRmVMSize
 	Get all VMSizes available in the selected Azure Location.
@@ -1052,13 +1078,19 @@ Function Select-AzLocation
 	Shell       :: Tested on PowerShell 5.0
 	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 14-Feb-2018 :: [Release] :: Publicly available
+	Version 1.1 :: 15-Feb-2018 :: [Feature] :: Added [-Region] parameter
 .LINK
-	https://ps1code.com/
+	https://ps1code.com/2018/02/19/azure-vm-size-powershell
 #>
 	
 	[CmdletBinding()]
 	[Alias("sazlo")]
 	Param (
+		[Parameter(Mandatory = $false, Position = 0)]
+		[ValidateSet('Asia', 'Australia', 'Brazil', 'Canada', 'Europe',
+			'India', 'Japan', 'Korea', 'UK', 'US', IgnoreCase = $false)]
+		[string]$Region
+		 ,
 		[Parameter(Mandatory = $false)]
 		[switch]$NameOnly
 	)
@@ -1066,17 +1098,25 @@ Function Select-AzLocation
 	Begin
 	{
 		$WarningPreference = 'SilentlyContinue'
+		$Header = 'Available Locations'
+		$DisplayProperty = 'DisplayName'
+		$NameProperty = 'Location'
 	}
 	Process
 	{
-		$DisplayProperty = 'DisplayName'
-		$NameProperty = 'Location'
 		
-		$AzObject = Write-Menu -Menu (Get-AzureRmLocation | sort $DisplayProperty) `
-					 -PropertyToShow $DisplayProperty `
-					 -Header 'Available Locations' `
-					 -Prompt 'Select Location' `
-					 -HeaderColor 'Yellow' -TextColor 'White' -Shift 1
+		$Locations = if ($PSBoundParameters.ContainsKey('Region'))
+		{
+			(Get-AzureRmLocation).Where{ $_.$DisplayProperty -cmatch $Region }
+			$Header += " in the $Region region"
+		}
+		else { Get-AzureRmLocation }
+		
+		$AzObject = Write-Menu -Menu ($Locations | sort $DisplayProperty) `
+							   -PropertyToShow $DisplayProperty `
+							   -Header $Header `
+							   -Prompt 'Select Location' `
+							   -HeaderColor 'Yellow' -TextColor 'White' -Shift 1
 	}
 	End
 	{
@@ -1943,3 +1983,174 @@ Function Remove-AzObject
 	End { }
 	
 } #EndFunction Remove-AzObject
+
+Function Get-AzVmSize
+{
+	
+<#
+.SYNOPSIS
+	Get Azure VMSizes that meet specified requirements.
+.DESCRIPTION
+	This function retrieves Azure VMSizes that meet specified requirements.
+.PARAMETER Location
+	Specifies Azure Location Name or object, returned by Select-AzLocation function.
+.PARAMETER Profile
+	Specifies workload profile for which a VMSize is optimized.
+.PARAMETER Core
+	Specifies minimum required vCPU count.
+.PARAMETER MemoryGB
+	Specifies minimum required Memory.
+.PARAMETER DataDisk
+	Specifies minimum required Data Disk count, supported by VMSize.
+.EXAMPLE
+	PS C:\> Get-AzVmSize -Location centralus -Profile Compute
+.EXAMPLE
+	PS C:\> Select-AzLocation | Get-AzVmSize
+	Get all VMSizes available in the selected Azure Location.
+.EXAMPLE
+	PS C:\> Select-AzLocation | Get-AzVmSize Memory -Core 4 -DataDisk 16
+	Get memory optimized VMSizes with at least four vCPU that
+	support more than sixteen data disks in the selected Azure Location.
+.EXAMPLE
+	PS C:\> Get-AzureRmLocation | Get-AzVmSize Storage
+	Get storage optimized VMSizes in all existing locations.
+.NOTES
+	Author      :: Roman Gelman @rgelman75
+	Dependency  :: AzureRm PowerShell Module, Write-Menu function (part of this Module)
+	Shell       :: Tested on PowerShell 5.0
+	Platform    :: Tested on AzureRm 4.3.1
+	Version 1.0 :: 15-Feb-2018 :: [Release] :: Publicly available
+.LINK
+	https://ps1code.com/2018/02/19/azure-vm-size-powershell
+#>
+	
+	[CmdletBinding()]
+	[Alias("azvms")]
+	Param (
+		[Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+		$Location
+		 ,
+		[Parameter(Mandatory = $false, Position = 0)]
+		[ValidateSet('General', 'Compute', 'Memory', 'Storage', 'GPU', 'Powerful')]
+		[string]$Profile
+		 ,
+		[Parameter(Mandatory = $false)]
+		[Alias('Cores')]
+		[uint16]$Core
+		 ,
+		[Parameter(Mandatory = $false)]
+		[uint16]$MemoryGB
+		 ,
+		[Parameter(Mandatory = $false)]
+		[Alias('DataDisks')]
+		[uint16]$DataDisk
+	)
+	
+	Begin
+	{
+		$WarningPreference = 'SilentlyContinue'
+		$rgxVmSize = '^(?<Type>[a-zA-Z]+)_(?<Series>[A-Z]{1,2})(?<Number>\d+-{0,1}\d*)(?<SubSeries>[a-z]*)(?<Version>_v\d+.*|$)'
+		$AzSizes = @()
+	}
+	Process
+	{
+		$LocationName = switch ($Location)
+		{
+			{ $_ -is [Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceProviderLocation] } { $Location.DisplayName; Break }
+			{ $_ -is [string] } { $Location }
+			Default { Throw "Not supported location data type" }
+		}
+		
+		$AzSizes = Get-AzureRmVMSize -Location $LocationName | % {
+			$ParseVmSize = [regex]::Match($_.Name, $rgxVmSize)
+			$Series = $ParseVmSize.Groups['Series'].Value
+			$SubSeries = $ParseVmSize.Groups['SubSeries'].Value
+			$v = [regex]::Match($ParseVmSize.Groups['Version'].Value, 'v\d+').Value
+			$Number = $ParseVmSize.Groups['Number'].Value
+			$Precision = if ($_.MemoryInMB -lt 10240) { 2 } else { 0 }
+			
+			$AzSize = [AzVmSize] @{
+				Location = $LocationName
+				VMSize = $_.Name
+				Cores = $_.NumberOfCores
+				MemoryGiB = [Math]::Round($_.MemoryInMB/1024, $Precision)
+				OSDiskGiB = [Math]::Round($_.OSDiskSizeInMB/1024, 0)
+				DataDisks = $_.MaxDataDiskCount
+				Type = $ParseVmSize.Groups['Type'].Value
+				Family = "$Series$SubSeries$v"
+				Series = $Series
+				Number = $Number
+				SubSeries = $SubSeries
+				Version = $v
+			}
+			
+			### Filter out by VM Size profile ###
+			if ($PSBoundParameters.ContainsKey('Profile'))
+			{
+				$SortBy = @('Cores', 'MemoryGiB')
+				
+				switch ($Profile)
+				{
+					'General'
+					{
+						switch ($AzSize)
+						{
+							{ 'B', 'D' -contains $_.Series } { $_ }
+							{ (0 .. 7 | % { "A$_" }) -contains "$($_.Series)$Number" } { $_ }
+							{ "$($_.Series)$($_.Version)" -eq 'Av2' } { $_ }
+						}
+						$SortBy = @('Type', 'Cores', 'MemoryGiB')
+						Break
+					}
+					'Compute'
+					{
+						if ($AzSize.Series -eq 'F') { $AzSize }
+						Break
+					}
+					'Memory'
+					{
+						switch ($AzSize)
+						{
+							{ 'D', 'G', 'GS', 'M' -contains $_.Series } { $_ }
+							{ 'Ev3', 'Esv3' -contains "$($_.Series)$($_.SubSeries)$($_.Version)" } { $_ }
+						}
+						$SortBy = @('MemoryGiB', 'Series')
+						Break
+					}
+					'Storage'
+					{
+						if ("$($AzSize.Series)$($AzSize.SubSeries)" -eq 'Ls') { $AzSize }
+						Break
+					}
+					'GPU'
+					{
+						if ('NC', 'ND', 'NV' -contains "$($AzSize.Series)$($AzSize.SubSeries)") { $AzSize }
+						Break
+					}
+					'Powerful'
+					{
+						switch ($AzSize)
+						{
+							{ (8 .. 11 | % { "A$_" }) -contains "$($_.Series)$Number" } { $_ }
+							{ "$($_.Series)" -eq 'H' } { $_ }
+						}
+					}
+				}
+			}
+			else
+			{
+				$AzSize
+				$SortBy = @('Type', 'Series', 'SubSeries')
+			}
+		}
+		
+		### Filter out by Virtual hardware requirements ###
+		$AzSizes = if ($PSBoundParameters.ContainsKey('Core')) { $AzSizes.Where{ $_.Cores -ge $Core } } else { $AzSizes }
+		$AzSizes = if ($PSBoundParameters.ContainsKey('MemoryGB')) { $AzSizes.Where{ $_.MemoryGiB -ge $MemoryGB } } else { $AzSizes }
+		$AzSizes = if ($PSBoundParameters.ContainsKey('DataDisk')) { $AzSizes.Where{ $_.DataDisks -ge $DataDisk } } else { $AzSizes }
+		
+		return $AzSizes | Sort-Object $SortBy
+	}
+	End { }
+	
+} #EndFunction Get-AzVmSize
