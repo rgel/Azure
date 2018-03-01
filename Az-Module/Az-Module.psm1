@@ -1080,7 +1080,7 @@ Function Select-AzLocation
 	Version 1.0 :: 14-Feb-2018 :: [Release] :: Publicly available
 	Version 1.1 :: 15-Feb-2018 :: [Feature] :: Added [-Region] parameter
 .LINK
-	https://ps1code.com/2018/02/19/azure-vm-size-powershell
+	https://ps1code.com/
 #>
 	
 	[CmdletBinding()]
@@ -1433,6 +1433,7 @@ Function Select-AzChildObject
 	Shell       :: Tested on PowerShell 5.0
 	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 14-Feb-2018 :: [Release] :: Publicly available
+	Version 1.1 :: 19-Feb-2018 :: [Bugfix] :: Error while retrieving StorageAccount AccessKeys for child blobs from a parent single container
 .LINK
 	https://ps1code.com/2018/02/14/azure-vhd-operations-powershell
 #>
@@ -1557,8 +1558,8 @@ Function Select-AzChildObject
 					Break
 				}
 				'Single Container Blob' {
-					$AccessKeys = Get-AzureRmStorageAccountKey -ResourceGroupName $ParentObject.ResourceGroupName -StorageAccountName $ParentObject.StorageAccountName -ErrorAction Stop
 					$SA = (Get-AzureRmStorageAccount -ErrorAction Stop).Where{ $_.StorageAccountName -eq $AzObject.Context.StorageAccountName }
+					$AccessKeys = Get-AzureRmStorageAccountKey -ResourceGroupName $SA.ResourceGroupName -StorageAccountName $AzObject.Context.StorageAccountName -ErrorAction Stop
 					[AzBlob] @{
 						ResourceGroup = $SA.ResourceGroupName
 						ParentStorageAccount = $AzObject.Context.StorageAccountName
@@ -2021,7 +2022,7 @@ Function Get-AzVmSize
 	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 15-Feb-2018 :: [Release] :: Publicly available
 .LINK
-	https://ps1code.com/2018/02/19/azure-vm-size-powershell
+	https://ps1code.com/
 #>
 	
 	[CmdletBinding()]
