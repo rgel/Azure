@@ -1203,10 +1203,15 @@ Function Select-AzObject
 	PS C:\> Select-AzObject -ObjectType VirtualNetwork -ResourceGroup (Select-AzResourceGroup) -NameOnly -Verbose
 .EXAMPLE
 	PS C:\> Select-AzObject -ObjectType VM | Get-AzVmDisk
+	Retrieve disks of selected VM.
 .EXAMPLE
 	PS C:\> Select-AzObject VNET | select -expand DhcpOptions
 .EXAMPLE
 	PS C:\> Select-AzObject VM -Filter testvm* | Start-AzureRmVM
+	Power on selected VM.
+.EXAMPLE
+	PS C:\> Select-AzObject VNIC | Remove-AzureRmNetworkInterface
+	Delete selected VNIC.
 .NOTES
 	Author      :: Roman Gelman @rgelman75
 	Dependency  :: AzureRm PowerShell Module, Write-Menu function (part of this Module)
@@ -1214,6 +1219,7 @@ Function Select-AzObject
 	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 26-Jun-2017 :: [Release] :: Publicly available
 	Version 1.1 :: 08-Feb-2018 :: [Change] :: Added [Select-AzItem] alias, verbose output [-Verbose] and [-Filter] parameter
+	Version 1.2 :: 12-Apr-2018 :: [Change] :: Added support for Virtual Network Interface objects [-ObjectType VNIC]
 .LINK
 	https://ps1code.com/2018/02/14/azure-vhd-operations-powershell
 #>
@@ -1227,7 +1233,11 @@ Function Select-AzObject
 		[string]$ResourceGroup
 		 ,
 		[Parameter(Mandatory = $false, Position = 1)]
-		[ValidateSet("VM", "StorageAccount", "SA", "VirtualNetwork", "VNET", "AvailabilitySet", "AS")]
+		[ValidateSet("VM",
+			   "StorageAccount", "SA",
+			   "VirtualNetwork", "VNET",
+			   "AvailabilitySet", "AS",
+			   "NetworkInterface", "VNIC")]
 		[string]$ObjectType = 'VM'
 		 ,
 		[Parameter(Mandatory = $false)]
@@ -1253,23 +1263,32 @@ Function Select-AzObject
 	{
 		$AzureRmFunction = switch -exact ($ObjectType)
 		{
+			### VMs ###
 			'VM'
 			{
 				'Get-AzureRmVM'
 			}
+			### StorageAccounts ###
 			{ 'StorageAccount', 'SA' -contains $_ }
 			{
 				'Get-AzureRmStorageAccount'
 				$DefaultProperty = 'StorageAccountName'
 			}
+			### VirtualNetworks ###
 			{ 'VirtualNetwork', 'VNET' -contains $_ }
 			{
 				'Get-AzureRmVirtualNetwork'
 			}
+			### AvailabilitySets ###
 			{ 'AvailabilitySet', 'AS' -contains $_ }
 			{
 				'Get-AzureRmAvailabilitySet'
 				if (!$PSBoundParameters.ContainsKey('ResourceGroup')) { Throw "You have to specify ResourceGroup name" }
+			}
+			### VNICs ###
+			{ 'NetworkInterface', 'VNIC' -contains $_ }
+			{
+				'Get-AzureRmNetworkInterface'
 			}
 		}
 		
@@ -2022,7 +2041,7 @@ Function Get-AzVmSize
 	Platform    :: Tested on AzureRm 4.3.1
 	Version 1.0 :: 15-Feb-2018 :: [Release] :: Publicly available
 .LINK
-	https://ps1code.com/
+	https://ps1code.com/2018/02/19/azure-vm-size-powershell
 #>
 	
 	[CmdletBinding()]
@@ -2155,3 +2174,131 @@ Function Get-AzVmSize
 	End { }
 	
 } #EndFunction Get-AzVmSize
+
+Function Set-AzVmSize
+{
+	
+<#
+.SYNOPSIS
+	Change Azure VM Size.
+.DESCRIPTION
+	This function changes AzureRM IaaS VM Size.
+.PARAMETER VM
+	Specifies Azure VM object(s), returned by Get-AzureRmVM cmdlet.
+.PARAMETER Size
+	Specifies a new VM Size.
+.EXAMPLE
+	PS C:\> Select-AzObject VM | Set-AzVmSize -Size Standard_F16 -Confirm:$false
+	Silently change VM Size for selected VM.
+.EXAMPLE
+	PS C:\> Get-AzureRmVM | Set-AzVmSize Standard_D4 -Verbose
+	Change VM Size for multiple VM.
+.NOTES
+	Author      :: Roman Gelman @rgelman75
+	Dependency  :: The Get-AzVmPowerState function (part of this module)
+	Shell       :: Tested on PowerShell 5.0
+	Platform    :: Tested on AzureRM 5.2.0
+	Version 1.0 :: 08-May-2018 :: [Release] :: Publicly available
+.LINK
+	https://ps1code.com/2018/02/19/azure-vm-size-powershell
+#>
+	
+	[CmdletBinding(ConfirmImpact = 'High', SupportsShouldProcess)]
+	[OutputType([PSCustomObject])]
+	Param (
+		[Parameter(Mandatory, ValueFromPipeline)]
+		[Alias("AzureVm")]
+		[Microsoft.Azure.Commands.Compute.Models.PSVirtualMachine][Microsoft.Azure.Commands.Compute.Models.PSVirtualMachineList]$VM
+		 ,
+		[Parameter(Mandatory, Position = 0)]
+		[Alias("VmSize")]
+		[string]$Size
+	)
+	
+	Begin
+	{
+		$ErrorActionPreference = 'Stop'
+		$WarningPreference = 'SilentlyContinue'
+		$rgxAzureId2Name = '.+/(.+)$'
+		$FunctionName = '{0}' -f $MyInvocation.MyCommand
+		Write-Verbose "$FunctionName :: Started at [$(Get-Date)]"
+	}
+	Process
+	{
+		$VmPowerState = ($VM | Get-AzVmPowerState).PowerState
+		$OldSize = $VM.HardwareProfile.VmSize
+		$NeedDeallocate = $false
+		
+		if ($OldSize -ne $Size)
+		{
+			if ($PSCmdlet.ShouldProcess("$VmPowerState VM [$($VM.Name)]", "Change VM Size from [$OldSize] to [$Size]"))
+			{
+				if ((Get-AzureRmVMSize -ResourceGroupName $VM.ResourceGroupName -VMName $VM.Name).Name -notcontains $Size -and $VmPowerState -ne 'Deallocated')
+				### The VM MUST be deallocated ###
+				{
+					$NeedDeallocate = $true
+					
+					if ($VM.AvailabilitySetReference.Id)
+					### The VM is AvailabilitySet's member ###
+					{
+						$AS = [regex]::Match($VM.AvailabilitySetReference.Id, $rgxAzureId2Name).Groups[1].Value
+						if ($PSCmdlet.ShouldProcess("AvailabilitySet [$AS]", "Deallocate all VM members"))
+						{
+							$VmId = (Get-AzureRmAvailabilitySet -Name $AS -ResourceGroupName $VM.ResourceGroupName).VirtualMachinesReferences.Id
+							
+							$VmId | % {
+								$VmName = [regex]::Match($_, $rgxAzureId2Name).Groups[1].Value
+								$VmRef = Get-AzureRmVM -Name $VmName -ResourceGroupName $VM.ResourceGroupName
+								if (($VmRef | Get-AzVmPowerState).PowerState -ne 'Deallocated')
+								{
+									$VmRef | Stop-AzureRmVM -Confirm:$false -Force | Out-Null
+									Write-Verbose "$FunctionName :: VM [$($VmName)] deallocated"
+								}
+							}
+						}
+					}
+					else
+					### Standalone VM ###
+					{
+						if ($PSCmdlet.ShouldProcess("ResourceGroup [$($VM.ResourceGroupName)]", "Deallocate VM [$($VM.Name)]"))
+						{
+							$VM | Stop-AzureRmVM -Confirm:$false -Force | Out-Null
+							Write-Verbose "$FunctionName :: VM [$($VM.Name)] deallocated"
+						}
+						else
+						{
+							Write-Verbose "$FunctionName :: VM [$($VM.Name)] deallocation canceled by user"
+							throw "VM [$($VM.Name)] - Deallocation canceled by user"
+						}
+					}
+				}
+				
+				### Update VM Size ###
+				$VM.HardwareProfile.VmSize = $Size
+				Write-Progress -Activity $FunctionName -Status "Updating VM [$($VM.Name)] ..." -CurrentOperation "Changing VM Size from [$OldSize] to [$Size]"
+				$VM | Update-AzureRmVM | Out-Null
+				
+				if ($VmPowerState -eq 'Running' -and $NeedDeallocate)
+				{
+					if (Get-Help Start-AzureRmVM -Parameter AsJob -ErrorAction SilentlyContinue) { $VM | Start-AzureRmVM -AsJob | Out-Null }
+					else { $VM | Start-AzureRmVM | Out-Null }
+					Write-Verbose "$FunctionName :: VM [$($VM.Name)] powered back on"
+				}
+				
+				[pscustomobject] @{
+					'Resource Group' = $VM.ResourceGroupName
+					'VM' = $VM.Name
+					'Power State' = $VmPowerState
+					'Previous Size' = $OldSize
+					'New Size' = $Size
+				}
+			}
+		}
+		else
+		{
+			Write-Verbose "$FunctionName :: VM [$($VM.Name)] - Current and new VM Size are the same! The update is canceled"
+		}
+	}
+	End { Write-Verbose "$FunctionName :: Finished at [$(Get-Date)]" }
+	
+} #EndFunction Set-AzVmSize
