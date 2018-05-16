@@ -57,6 +57,7 @@ To start using the module functions:
 |15|[<b>Copy-AzBlob</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Copy/Move/Rename blobs|
 |16|[<b>Remove-AzObject</b>](https://ps1code.com/2018/02/14/azure-vhd-operations-powershell)|Delete an Azure object (Supports pipeline from the `Select-AzChildObject` function)|
 |17|[<b>Get-AzVmSize</b>](https://ps1code.com/2018/02/19/azure-vm-size-powershell)|Select right Azure VM Size|
+|18|[<b>Set-AzVmSize</b>](https://ps1code.com/2018/05/16/resize-azure-vm-powershell)|Resize Azure VM|
 
 ##
 Stay tuned for the updates!
