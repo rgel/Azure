@@ -16,7 +16,7 @@
 ### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module)
 
 > [!NOTE]
-> PowerShell `5` or above is required
+> PowerShell `5` or above is required\
 > To check, type the following: `$PSVersionTable.PSVersion.Major`
 
 To install this module, drop the entire `Az-Module` folder into one of your module directories
