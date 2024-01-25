@@ -1,4 +1,4 @@
-# ![azuregithub](https://user-images.githubusercontent.com/6964549/36364586-9c3bd290-154d-11e8-81b0-20b73fe8d4f7.png)Microsoft Azure PowerShell Repo
+# ![azuregithub](https://user-images.githubusercontent.com/6964549/36364586-9c3bd290-154d-11e8-81b0-20b73fe8d4f7.png)Azure PowerShell Repo
 
 ### SCRIPTS
 
