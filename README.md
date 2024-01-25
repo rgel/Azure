@@ -16,31 +16,31 @@
 ### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module)
 
 > [!NOTE]
-> PowerShell 5 or above is required.
-> To check, type the following: `$PSVersionTable.PSVersion.Major`.
+> PowerShell `5` or above is required
+> To check, type the following: `$PSVersionTable.PSVersion.Major`
 
-To install this module, drop the entire `Az-Module` folder into one of your module directories.
+To install this module, drop the entire `Az-Module` folder into one of your module directories
 
-The default PowerShell module paths are listed in the `$env:PSModulePath` environment variable.
+The default PowerShell module paths are listed in the `$env:PSModulePath` environment variable
 
 To make it look better, split the paths in this manner: `$env:PSModulePath -split ';'`
 
-The default per-user module path is: `"$env:HOMEDRIVE$env:HOMEPATH\Documents\WindowsPowerShell\Modules"`.
+The default per-user module path is: `"$env:HOMEDRIVE$env:HOMEPATH\Documents\WindowsPowerShell\Modules"`
 
-The default computer-level module path is: `"$env:windir\System32\WindowsPowerShell\v1.0\Modules"`.
+The default computer-level module path is: `"$env:windir\System32\WindowsPowerShell\v1.0\Modules"`
 
-To use the module, type following command: `Import-Module Az-Module -Force -Verbose`.
+To use the module, type following command: `Import-Module Az-Module -Force -Verbose`
 
-To see the commands imported, type `Get-Command -Module Az-Module`.
+To see the commands imported, type `Get-Command -Module Az-Module`
 
-For help on each individual cmdlet or function, run `Get-Help CmdletName -Full [-Online][-Examples]`.
+For help on each individual cmdlet or function, run `Get-Help CmdletName -Full [-Online][-Examples]`
 
 > [!TIP]
 > To start using the module functions:
 
-+ Install <b>Azure Resource Manager Module</b> module from Microsoft PSGallery by `Install-Module AzureRm`.
-+ Connect to your Azure account by `Login-AzureRmAccount` cmdlet.
-+ Optionally, select your target subscription by `Select-AzSubscription` function.
++ Install <b>Azure Resource Manager Module</b> module from Microsoft PSGallery by `Install-Module AzureRm`
++ Connect to your Azure account by `Login-AzureRmAccount` cmdlet
++ Optionally, select your target subscription by `Select-AzSubscription` function
 
 |No|Function|Description|
 |----|----|----|
