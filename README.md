@@ -16,7 +16,7 @@
 
 <ins>Requirements:</ins> PowerShell 5 or above. To check, type the following command: `$PSVersionTable.PSVersion.Major`.
 
-To install this module, drop the entire $${\color{lightgreen}Az-Module}$$ folder into one of your module directories.
+To install this module, drop the entire `Az-Module` folder into one of your module directories.
 
 The default PowerShell module paths are listed in the `$env:PSModulePath` environment variable.
 
