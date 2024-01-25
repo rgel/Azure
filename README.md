@@ -12,7 +12,8 @@
 ##
 ### ${\color{green}MODULES}$
 
-### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module) Azure Automation PowerShell Module
+### ${\textsf{\color{blue}Azure \space Automation \space PowerShell \space Module}}$
+### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module)
 
 <ins>Requirements:</ins> PowerShell 5 or above. To check, type the following command: `$PSVersionTable.PSVersion.Major`.
 
