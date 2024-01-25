@@ -1,6 +1,6 @@
 # ![azuregithub](https://user-images.githubusercontent.com/6964549/36364586-9c3bd290-154d-11e8-81b0-20b73fe8d4f7.png)Azure PowerShell Repo
 
-### $${\color{green}SCRIPTS}$$
+### ${\color{green}SCRIPTS}$
 
 |No|Script|Description|
 |----|----|----|
@@ -10,7 +10,7 @@
 |4|[<b>Apply-AzVmPowerStatePolicy.ps1</b>](https://github.com/rgel/Azure/blob/master/Apply-AzVmPowerStatePolicy.ps1)|[Start/Stop](https://ps1code.com/2017/06/28/stop-start-azure-vm-schedule) Azure VM in parallel on schedule based on two VM Tags (`PowerOn`/`PowerOff`)|
 
 ##
-### MODULES
+### ${\color{green}MODULES}$
 
 ### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module) Azure Automation PowerShell Module
 
