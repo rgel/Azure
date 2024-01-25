@@ -60,4 +60,4 @@ To start using the module functions:
 |18|[<b>Set-AzVmSize</b>](https://ps1code.com/2018/05/16/resize-azure-vm-powershell)|Resize Azure VM|
 
 ##
-[<b>Stay tuned for the updates!</b>](https://ps1code.com/category/powershell/azure/)
+[Stay tuned for the updates!](https://ps1code.com/category/powershell/azure/)
