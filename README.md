@@ -1,6 +1,6 @@
 # ![azuregithub](https://user-images.githubusercontent.com/6964549/36364586-9c3bd290-154d-11e8-81b0-20b73fe8d4f7.png)$${\color{blue}Azure \space PowerShell \space Repo}$$
 
-### ${\color{green}SCRIPTS}$
+### $${\color{green}SCRIPTS}$$
 
 |No|Script|Description|
 |----|----|----|
@@ -10,7 +10,7 @@
 |4|[<b>Apply-AzVmPowerStatePolicy.ps1</b>](https://github.com/rgel/Azure/blob/master/Apply-AzVmPowerStatePolicy.ps1)|[Start/Stop](https://ps1code.com/2017/06/28/stop-start-azure-vm-schedule) Azure VM in parallel on schedule based on two VM Tags (`PowerOn`/`PowerOff`)|
 
 ##
-### ${\color{green}MODULES}$
+### $${\color{green}MODULES}$$
 
 ### ${\color{blue}Azure \space Automation \space PowerShell \space Module}$
 ### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module)
@@ -19,21 +19,21 @@
 > PowerShell `5` or above is required\
 > To check, type the following: `$PSVersionTable.PSVersion.Major`
 
-To install this module, drop the entire `Az-Module` folder into one of your module directories
++ To install this module, drop the entire `Az-Module` folder into one of your module directories
 
-The default PowerShell module paths are listed in the `$env:PSModulePath` environment variable
++ The default PowerShell module paths are listed in the `$env:PSModulePath` environment variable
 
-To make it look better, split the paths in this manner: `$env:PSModulePath -split ';'`
++ To make it look better, split the paths in this manner: `$env:PSModulePath -split ';'`
 
-The default per-user module path is: `"$env:HOMEDRIVE$env:HOMEPATH\Documents\WindowsPowerShell\Modules"`
++ The default per-user module path is: `"$env:HOMEDRIVE$env:HOMEPATH\Documents\WindowsPowerShell\Modules"`
 
-The default computer-level module path is: `"$env:windir\System32\WindowsPowerShell\v1.0\Modules"`
++ The default computer-level module path is: `"$env:windir\System32\WindowsPowerShell\v1.0\Modules"`
 
-To use the module, type following command: `Import-Module Az-Module -Force -Verbose`
++ To use the module, type following command: `Import-Module Az-Module -Force -Verbose`
 
-To see the commands imported, type `Get-Command -Module Az-Module`
++ To see the commands imported, type `Get-Command -Module Az-Module`
 
-For help on each individual cmdlet or function, run `Get-Help CmdletName -Full [-Online][-Examples]`
++ For help on each individual cmdlet or function, run `Get-Help CmdletName -Full [-Online][-Examples]`
 
 > [!TIP]
 > To start using the module functions:
