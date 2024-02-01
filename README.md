@@ -38,9 +38,9 @@
 > [!TIP]
 > To start using the module functions:
 
-+ Install <b>Azure Resource Manager Module</b> module from Microsoft PSGallery by `Install-Module AzureRm`
-+ Connect to your Azure account by `Login-AzureRmAccount` cmdlet
-+ Optionally, select your target subscription by `Select-AzSubscription` function
++ Install [<b>Microsoft Azure PowerShell module</b>](https://www.powershellgallery.com/packages/Az/) from Microsoft PSGallery by `Install-Module Az`
++ Connect to your Azure account by `Login-AzAccount` cmdlet
++ Optionally, select your target subscription by `Az-Module\Select-AzSubscription` function
 
 |No|Function|Description|
 |----|----|----|
