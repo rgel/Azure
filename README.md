@@ -12,7 +12,6 @@
 ##
 ### $${\color{green}MODULES}$$
 
-### ${\color{blue}Azure \space Automation \space PowerShell \space Module}$
 ### [<ins>Az-Module</ins>](https://github.com/rgel/Azure/tree/master/Az-Module)
 
 > [!NOTE]
